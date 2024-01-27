@@ -1,9 +1,11 @@
 /*
  * File: sqs.go
- * Created Date: Thursday, September 14th 2023, 5:52:05 pm
+ * Created Date: Friday, January 26th 2024, 9:49:36 am
  *
- * Last Modified: Thu Oct 12 2023
+ * Last Modified: Fri Jan 26 2024
  * Modified By: Howard Ling-Hao Kung
+ *
+ * Copyright (c) 2024 Codeworks Ltd.
  */
 
 package awsutil

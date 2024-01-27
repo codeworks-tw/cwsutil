@@ -1,9 +1,11 @@
 /*
- * File: dynamodb_test.go
- * Created Date: Saturday, October 7th 2023, 3:41:12 pm
+ * File: aws_clients.go
+ * Created Date: Friday, January 26th 2024, 9:49:36 am
  *
  * Last Modified: Fri Jan 26 2024
  * Modified By: Howard Ling-Hao Kung
+ *
+ * Copyright (c) 2024 Codeworks Ltd.
  */
 
 package awsutil

@@ -1,9 +1,11 @@
 /*
  * File: sts.go
- * Created Date: Thursday, October 12th 2023, 9:38:25 am
+ * Created Date: Friday, January 26th 2024, 9:49:36 am
  *
- * Last Modified: Thu Oct 12 2023
+ * Last Modified: Fri Jan 26 2024
  * Modified By: Howard Ling-Hao Kung
+ *
+ * Copyright (c) 2024 Codeworks Ltd.
  */
 
 package awsutil

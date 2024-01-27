@@ -1,9 +1,11 @@
 /*
  * File: step.go
- * Created Date: Monday, November 27th 2023, 5:57:28 pm
+ * Created Date: Friday, January 26th 2024, 9:49:36 am
  *
  * Last Modified: Fri Jan 26 2024
  * Modified By: Howard Ling-Hao Kung
+ *
+ * Copyright (c) 2024 Codeworks Ltd.
  */
 
 package fsm

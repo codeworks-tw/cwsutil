@@ -4,6 +4,8 @@
  *
  * Last Modified: Fri Jan 26 2024
  * Modified By: Howard Ling-Hao Kung
+ *
+ * Copyright (c) 2024 Codeworks Ltd.
  */
 
 package cwsutil

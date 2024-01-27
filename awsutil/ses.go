@@ -1,9 +1,11 @@
 /*
  * File: ses.go
- * Created Date: Tuesday, September 26th 2023, 2:05:51 pm
+ * Created Date: Friday, January 26th 2024, 9:49:36 am
  *
- * Last Modified: Wed Oct 18 2023
+ * Last Modified: Fri Jan 26 2024
  * Modified By: Howard Ling-Hao Kung
+ *
+ * Copyright (c) 2024 Codeworks Ltd.
  */
 
 package awsutil
