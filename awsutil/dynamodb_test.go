@@ -1,11 +1,11 @@
 /*
- * File: aws_clients.go
+ * File: dynamodb_test.go
  * Created Date: Friday, January 26th 2024, 9:49:36 am
  *
- * Last Modified: Fri Jan 26 2024
+ * Last Modified: Sat Jan 27 2024
  * Modified By: Howard Ling-Hao Kung
  *
- * Copyright (c) 2024 Codeworks Ltd.
+ * Copyright (c) 2024 - Present Codeworks TW Ltd.
  */
 
 package awsutil
@@ -56,7 +56,6 @@ func TestDynamoDBProxy(t *testing.T) {
 		if err != nil {
 			log.Fatalln(err.Error())
 		}
-		log.Println("Table Deleted")
 	}
 
 	if !TestTableProxy.ProxyTableIsActive() {
@@ -90,8 +89,6 @@ func TestDynamoDBProxy(t *testing.T) {
 		if err != nil {
 			log.Fatal(err.Error())
 		}
-
-		log.Println("Table Created")
 	}
 
 	item, err := TestTableProxy.ProxyGetItem(&dynamodb.GetItemInput{

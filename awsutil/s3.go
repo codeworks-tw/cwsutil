@@ -2,18 +2,18 @@
  * File: s3.go
  * Created Date: Friday, January 26th 2024, 9:49:36 am
  *
- * Last Modified: Fri Jan 26 2024
+ * Last Modified: Sat Jan 27 2024
  * Modified By: Howard Ling-Hao Kung
  *
- * Copyright (c) 2024 Codeworks Ltd.
+ * Copyright (c) 2024 - Present Codeworks TW Ltd.
  */
 
 package awsutil
 
 import (
+	"baseutil"
 	"bytes"
 	"context"
-	"cws"
 	"errors"
 	"io"
 	"log"
@@ -151,7 +151,7 @@ func (p *S3Proxy) ProxyGetObject(subPath string, parsingFunc func(content []byte
 		s3Objects[key] = &S3ProxyObject{
 			Content:          pb,
 			VersionId:        versonId,
-			ExpiredTimeStamp: int((time.Now().UTC().Add(time.Minute * time.Duration(cws.GetEnv("S3CacheTTL", 10)))).Unix()),
+			ExpiredTimeStamp: int((time.Now().UTC().Add(time.Minute * time.Duration(baseutil.GetEnv("S3CacheTTL", 10)))).Unix()),
 		}
 		s3Objects[key].updateVersionCheck()
 
@@ -195,5 +195,5 @@ func (p *S3Proxy) proxyLoadObject(subPath string, parsingFunc func(content []byt
 }
 
 func (p *S3ProxyObject) updateVersionCheck() {
-	p.NextVersionCheck = int((time.Now().UTC().Add(time.Second * time.Duration(cws.GetEnv("S3VersionCheck", 30)))).Unix())
+	p.NextVersionCheck = int((time.Now().UTC().Add(time.Second * time.Duration(baseutil.GetEnv("S3VersionCheck", 30)))).Unix())
 }

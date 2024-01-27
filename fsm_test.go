@@ -2,10 +2,10 @@
  * File: fsm_test.go
  * Created Date: Friday, January 26th 2024, 11:25:17 am
  *
- * Last Modified: Fri Jan 26 2024
+ * Last Modified: Sat Jan 27 2024
  * Modified By: Howard Ling-Hao Kung
  *
- * Copyright (c) 2024 Codeworks Ltd.
+ * Copyright (c) 2024 - Present Codeworks TW Ltd.
  */
 
 package cwsutil
@@ -103,5 +103,5 @@ func TestFSM(t *testing.T) {
 		}
 	}
 
-	fmt.Println("================ Testing fsm passed ================")
+	fmt.Println("================ Testing fsm end ================")
 }

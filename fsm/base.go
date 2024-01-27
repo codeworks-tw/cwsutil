@@ -2,10 +2,10 @@
  * File: base.go
  * Created Date: Friday, January 26th 2024, 9:49:36 am
  *
- * Last Modified: Fri Jan 26 2024
+ * Last Modified: Sat Jan 27 2024
  * Modified By: Howard Ling-Hao Kung
  *
- * Copyright (c) 2024 Codeworks Ltd.
+ * Copyright (c) 2024 - Present Codeworks TW Ltd.
  */
 
 package fsm
