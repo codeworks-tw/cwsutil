@@ -11,7 +11,7 @@
 package cwsutil
 
 import (
-	"baseutil"
+	"cwsutil/baseutil"
 	"encoding/json"
 	"log"
 	"net/http"

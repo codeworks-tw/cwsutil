@@ -12,8 +12,8 @@ package cwsutil
 
 import (
 	"context"
+	"cwsutil/fsm"
 	"fmt"
-	"fsm"
 	"testing"
 )
 

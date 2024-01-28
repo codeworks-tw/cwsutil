@@ -11,9 +11,9 @@
 package awsutil
 
 import (
-	"baseutil"
 	"bytes"
 	"context"
+	"cwsutil/baseutil"
 	"errors"
 	"io"
 	"log"

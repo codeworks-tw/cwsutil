@@ -11,9 +11,9 @@
 package cwsutil
 
 import (
-	"awsutil"
-	"baseutil"
 	"context"
+	"cwsutil/awsutil"
+	"cwsutil/baseutil"
 	"reflect"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
