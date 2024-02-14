@@ -2,7 +2,7 @@
  * File: crypto.go
  * Created Date: Friday, January 26th 2024, 9:49:36 am
  *
- * Last Modified: Sat Jan 27 2024
+ * Last Modified: Wed Feb 14 2024
  * Modified By: Howard Ling-Hao Kung
  *
  * Copyright (c) 2024 - Present Codeworks TW Ltd.
@@ -26,11 +26,11 @@ func EncryptMap(input map[string]any) (string, error) {
 		return "", err
 	}
 
-	return AESCBCPKCS5PaddingEncrypt(data, aes.BlockSize)
+	return aESCBCPKCS5PaddingEncrypt(data, aes.BlockSize)
 }
 
 func DecryptToMap(input string) (map[string]any, error) {
-	data, err := AESCBCPKCS5PaddingDecrypt(input)
+	data, err := aESCBCPKCS5PaddingDecrypt(input)
 	if err != nil {
 		return nil, err
 	}
@@ -43,7 +43,7 @@ func DecryptToMap(input string) (map[string]any, error) {
 	return output, nil
 }
 
-func AESCBCPKCS5PaddingEncrypt(plaintext []byte, blockSize int) (string, error) {
+func aESCBCPKCS5PaddingEncrypt(plaintext []byte, blockSize int) (string, error) {
 	key, err := hex.DecodeString(GetEnv[string]("CRYPTO_KEY_HEX"))
 	if err != nil {
 		return "", err
@@ -55,7 +55,7 @@ func AESCBCPKCS5PaddingEncrypt(plaintext []byte, blockSize int) (string, error) 
 
 	bKey := []byte(key)
 	bIV := []byte(iv)
-	bPlaintext := PKCS5Padding(plaintext, blockSize)
+	bPlaintext := pKCS5Padding(plaintext, blockSize)
 	block, err := aes.NewCipher(bKey)
 	if err != nil {
 		return "", err
@@ -66,7 +66,7 @@ func AESCBCPKCS5PaddingEncrypt(plaintext []byte, blockSize int) (string, error) 
 	return base64.URLEncoding.EncodeToString(ciphertext), nil
 }
 
-func AESCBCPKCS5PaddingDecrypt(cipherTextBase64 string) ([]byte, error) {
+func aESCBCPKCS5PaddingDecrypt(cipherTextBase64 string) ([]byte, error) {
 	key, err := hex.DecodeString(GetEnv[string]("CRYPTO_KEY_HEX"))
 	if err != nil {
 		return nil, err
@@ -90,20 +90,20 @@ func AESCBCPKCS5PaddingDecrypt(cipherTextBase64 string) ([]byte, error) {
 
 	mode := cipher.NewCBCDecrypter(block, bIV)
 	mode.CryptBlocks([]byte(cipherTextDecoded), []byte(cipherTextDecoded))
-	cipherTextDecoded, err = PKCS5Unpadding(cipherTextDecoded, aes.BlockSize)
+	cipherTextDecoded, err = pKCS5Unpadding(cipherTextDecoded, aes.BlockSize)
 	if err != nil {
 		return nil, err
 	}
 	return cipherTextDecoded, nil
 }
 
-func PKCS5Padding(ciphertext []byte, blockSize int) []byte {
+func pKCS5Padding(ciphertext []byte, blockSize int) []byte {
 	padding := (blockSize - len(ciphertext)%blockSize)
 	padtext := bytes.Repeat([]byte{byte(padding)}, padding)
 	return append(ciphertext, padtext...)
 }
 
-func PKCS5Unpadding(src []byte, blockSize int) ([]byte, error) {
+func pKCS5Unpadding(src []byte, blockSize int) ([]byte, error) {
 	srcLen := len(src)
 	paddingLen := int(src[srcLen-1])
 	if paddingLen >= srcLen || paddingLen > blockSize {
