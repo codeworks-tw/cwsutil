@@ -180,6 +180,10 @@ func TestRepository(t *testing.T) {
 	}
 
 	item, err = repo.Get(ctx, TestItemPKey{Id: "abc", Item1: 1})
+	if err != nil {
+		log.Fatalln(err)
+	}
+
 	if item == nil {
 		t.Error("item is nil")
 	}
@@ -198,6 +202,9 @@ func TestRepository(t *testing.T) {
 	}
 
 	items, err := repo.Query(ctx, indexName, expr)
+	if err != nil {
+		log.Fatalln(err)
+	}
 
 	for _, item := range items {
 		t.Log(item)
