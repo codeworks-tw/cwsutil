@@ -12,9 +12,10 @@ package cwsutil
 
 import (
 	"context"
-	"cwsutil/cwsfsm"
 	"fmt"
 	"testing"
+
+	"github.com/codeworks-tw/cwsutil/cwsfsm"
 )
 
 var StepIdle cwsfsm.Step = func(ctx context.Context, id string, attrs map[string]any, args ...any) error {

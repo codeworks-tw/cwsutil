@@ -12,9 +12,10 @@ package cwsutil
 
 import (
 	"context"
-	"cwsutil/cwsaws"
-	"cwsutil/cwsbase"
 	"reflect"
+
+	"github.com/codeworks-tw/cwsutil/cwsaws"
+	"github.com/codeworks-tw/cwsutil/cwsbase"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"

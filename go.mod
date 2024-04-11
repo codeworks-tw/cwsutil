@@ -1,4 +1,4 @@
-module cwsutil
+module github.com/codeworks-tw/cwsutil
 
 go 1.20
 

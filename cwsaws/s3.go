@@ -13,12 +13,13 @@ package cwsaws
 import (
 	"bytes"
 	"context"
-	"cwsutil/cwsbase"
 	"errors"
 	"io"
 	"log"
 	"sync"
 	"time"
+
+	"github.com/codeworks-tw/cwsutil/cwsbase"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/s3"

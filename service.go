@@ -11,10 +11,11 @@
 package cwsutil
 
 import (
-	"cwsutil/cwsbase"
 	"encoding/json"
 	"log"
 	"net/http"
+
+	"github.com/codeworks-tw/cwsutil/cwsbase"
 
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"

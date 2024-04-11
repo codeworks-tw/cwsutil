@@ -11,10 +11,11 @@
 package cwsutil
 
 import (
-	"cwsutil/cwsbase"
 	"fmt"
 	"os"
 	"testing"
+
+	"github.com/codeworks-tw/cwsutil/cwsbase"
 )
 
 func TestUtil(t *testing.T) {
