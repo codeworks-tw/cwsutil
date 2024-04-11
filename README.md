@@ -12,3 +12,5 @@
 
 * *S3CacheTTL*: S3 Object local cache time to live in minutes.
 
+# Release
+* 0.1.0 - Apr. 11, 2024
