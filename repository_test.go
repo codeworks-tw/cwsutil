@@ -2,7 +2,7 @@
  * File: repository_test.go
  * Created Date: Saturday, January 27th 2024, 10:29:49 am
  *
- * Last Modified: Sat Jan 27 2024
+ * Last Modified: Thu Apr 11 2024
  * Modified By: Howard Ling-Hao Kung
  *
  * Copyright (c) 2024 - Present Codeworks TW Ltd.
@@ -47,12 +47,12 @@ var repo Repository[TestItemPKey] = Repository[TestItemPKey]{
 	TableName: "TestTable",
 }
 
-func createTestTable(ctx context.Context) {
+func createTestTable(ctx context.Context) error {
 	proxy := repo.GetDynamoDBTableProxy(ctx)
 	if proxy.ProxyTableIsActive() {
 		_, err := proxy.ProxyDeleteTableAndWait()
 		if err != nil {
-			log.Fatalln(err.Error())
+			return err
 		}
 	}
 
@@ -85,9 +85,10 @@ func createTestTable(ctx context.Context) {
 			BillingMode: types.BillingModeProvisioned,
 		})
 		if err != nil {
-			log.Fatal(err.Error())
+			return err
 		}
 	}
+	return nil
 }
 
 func createGSI(ctx context.Context, name string, key string, projections []string) error {
@@ -153,7 +154,11 @@ func TestRepository(t *testing.T) {
 	os.Setenv("Local_DynamoDB_REGION", "localhost")
 
 	ctx := context.TODO()
-	createTestTable(ctx)
+	err := createTestTable(ctx)
+	if err != nil {
+		log.Println("Local DynamoDB does not exist. Test is skiped.")
+		return
+	}
 
 	update := expression.Set(expression.Name("Item2"), expression.Value("def"))
 	update = update.Set(expression.Name("Array1"), expression.Value([]string{"a", "b", "c"}))

@@ -2,7 +2,7 @@
  * File: fsm_test.go
  * Created Date: Friday, January 26th 2024, 11:25:17 am
  *
- * Last Modified: Sat Jan 27 2024
+ * Last Modified: Thu Apr 11 2024
  * Modified By: Howard Ling-Hao Kung
  *
  * Copyright (c) 2024 - Present Codeworks TW Ltd.
@@ -12,53 +12,53 @@ package cwsutil
 
 import (
 	"context"
-	"cwsutil/fsm"
+	"cwsutil/cwsfsm"
 	"fmt"
 	"testing"
 )
 
-var StepIdle fsm.Step = func(ctx context.Context, id string, attrs map[string]any, args ...any) error {
+var StepIdle cwsfsm.Step = func(ctx context.Context, id string, attrs map[string]any, args ...any) error {
 	fmt.Println("Idle")
 	return nil
 }
 
-var ActionIdle fsm.Action = fsm.Action{
+var ActionIdle cwsfsm.Action = cwsfsm.Action{
 	Name: "Idle",
-	Steps: []fsm.IStep{
+	Steps: []cwsfsm.IStep{
 		StepIdle,
 	},
 }
 
-var StepHelloWorld fsm.Step = func(ctx context.Context, id string, attrs map[string]any, args ...any) error {
+var StepHelloWorld cwsfsm.Step = func(ctx context.Context, id string, attrs map[string]any, args ...any) error {
 	fmt.Println(args...)
 	return nil
 }
 
-var ActionSayHello fsm.Action = fsm.Action{
+var ActionSayHello cwsfsm.Action = cwsfsm.Action{
 	Name: "SayHello",
-	Steps: []fsm.IStep{
+	Steps: []cwsfsm.IStep{
 		StepHelloWorld,
 	},
 }
 
-var StepCountOne fsm.Step = func(ctx context.Context, id string, attrs map[string]any, args ...any) error {
+var StepCountOne cwsfsm.Step = func(ctx context.Context, id string, attrs map[string]any, args ...any) error {
 	fmt.Println("CountOne")
 	return nil
 }
 
-var StepCountTwo fsm.Step = func(ctx context.Context, id string, attrs map[string]any, args ...any) error {
+var StepCountTwo cwsfsm.Step = func(ctx context.Context, id string, attrs map[string]any, args ...any) error {
 	fmt.Println("CountTwo")
 	return nil
 }
 
-var StepCountThree fsm.Step = func(ctx context.Context, id string, attrs map[string]any, args ...any) error {
+var StepCountThree cwsfsm.Step = func(ctx context.Context, id string, attrs map[string]any, args ...any) error {
 	fmt.Println("CountThree")
 	return nil
 }
 
-var ActionCount fsm.Action = fsm.Action{
+var ActionCount cwsfsm.Action = cwsfsm.Action{
 	Name: "Count",
-	Steps: []fsm.IStep{
+	Steps: []cwsfsm.IStep{
 		StepCountOne,
 		StepCountTwo,
 		StepCountThree,
@@ -67,7 +67,7 @@ var ActionCount fsm.Action = fsm.Action{
 
 func TestFSM(t *testing.T) {
 	fmt.Println("\n================ Testing fsm ================")
-	fsm := fsm.StateMachineManager{
+	fsm := cwsfsm.StateMachineManager{
 		DefaultAction: "Idle",
 	}
 

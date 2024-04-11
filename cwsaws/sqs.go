@@ -2,13 +2,13 @@
  * File: sqs.go
  * Created Date: Friday, January 26th 2024, 9:49:36 am
  *
- * Last Modified: Sat Jan 27 2024
+ * Last Modified: Thu Apr 11 2024
  * Modified By: Howard Ling-Hao Kung
  *
  * Copyright (c) 2024 - Present Codeworks TW Ltd.
  */
 
-package awsutil
+package cwsaws
 
 import (
 	"context"

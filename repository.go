@@ -2,7 +2,7 @@
  * File: repository.go
  * Created Date: Saturday, January 27th 2024, 9:46:26 am
  *
- * Last Modified: Sat Jan 27 2024
+ * Last Modified: Thu Apr 11 2024
  * Modified By: Howard Ling-Hao Kung
  *
  * Copyright (c) 2024 - Present Codeworks TW Ltd.
@@ -12,8 +12,8 @@ package cwsutil
 
 import (
 	"context"
-	"cwsutil/awsutil"
-	"cwsutil/baseutil"
+	"cwsutil/cwsaws"
+	"cwsutil/cwsbase"
 	"reflect"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -30,7 +30,7 @@ type IRepository[PKey any] interface {
 	Query(ctx context.Context, indexName string, expr expression.Expression) ([]*map[string]any, error)
 	Merge(ctx context.Context, pKey PKey, expr expression.Expression) (*map[string]any, error)
 	Delete(ctx context.Context, pKey PKey) (*map[string]any, error)
-	GetDynamoDBTableProxy(ctx context.Context) *awsutil.DynamoDBTableProxy[map[string]any]
+	GetDynamoDBTableProxy(ctx context.Context) *cwsaws.DynamoDBTableProxy[map[string]any]
 	GetPKeyKeys() []string
 }
 
@@ -50,22 +50,22 @@ func (r *Repository[PKey]) GetPKeyKeys() []string {
 	return keys
 }
 
-func (r *Repository[PKey]) GetDynamoDBTableProxy(ctx context.Context) awsutil.DynamoDBTableProxy[map[string]any] {
-	if baseutil.GetEnvironmentInfo().IsLocal {
+func (r *Repository[PKey]) GetDynamoDBTableProxy(ctx context.Context) cwsaws.DynamoDBTableProxy[map[string]any] {
+	if cwsbase.GetEnvironmentInfo().IsLocal {
 		credential := config.WithCredentialsProvider(credentials.NewStaticCredentialsProvider(
-			baseutil.GetEnv[string]("Local_DynamoDB_AWS_ID"),
-			baseutil.GetEnv[string]("Local_DynamoDB_AWS_Secret"), ""))
+			cwsbase.GetEnv[string]("Local_DynamoDB_AWS_ID"),
+			cwsbase.GetEnv[string]("Local_DynamoDB_AWS_Secret"), ""))
 		endPoint := config.WithEndpointResolverWithOptions(
 			aws.EndpointResolverWithOptionsFunc(func(service, region string, options ...interface{}) (aws.Endpoint, error) {
 				return aws.Endpoint{
-					URL:           baseutil.GetEnv[string]("Local_DynamoDB_URL"),
-					SigningRegion: baseutil.GetEnv[string]("Local_DynamoDB_REGION"),
+					URL:           cwsbase.GetEnv[string]("Local_DynamoDB_URL"),
+					SigningRegion: cwsbase.GetEnv[string]("Local_DynamoDB_REGION"),
 				}, nil
 			}))
 
-		return awsutil.GetDynamoDBTableProxy[map[string]any](r.TableName, ctx, credential, endPoint)
+		return cwsaws.GetDynamoDBTableProxy[map[string]any](r.TableName, ctx, credential, endPoint)
 	}
-	return awsutil.GetDynamoDBTableProxy[map[string]any](r.TableName, ctx)
+	return cwsaws.GetDynamoDBTableProxy[map[string]any](r.TableName, ctx)
 }
 
 func (r *Repository[PKey]) Get(ctx context.Context, pKey PKey, columns ...string) (*map[string]any, error) {

@@ -2,7 +2,7 @@
  * File: service.go
  * Created Date: Wednesday, February 14th 2024, 9:56:18 am
  *
- * Last Modified: Wed Feb 14 2024
+ * Last Modified: Thu Apr 11 2024
  * Modified By: Howard Ling-Hao Kung
  *
  * Copyright (c) 2024 - Present Codeworks TW Ltd.
@@ -11,7 +11,7 @@
 package cwsutil
 
 import (
-	"cwsutil/baseutil"
+	"cwsutil/cwsbase"
 	"encoding/json"
 	"log"
 	"net/http"
@@ -23,13 +23,13 @@ import (
 
 type CWSError struct {
 	StatusCode       int
-	LocalCode        baseutil.LocalizationCode
+	LocalCode        cwsbase.LocalizationCode
 	EmbeddingStrings []any
 	ActualError      error
 }
 
 func (e *CWSError) Error() string {
-	r := baseutil.GetLocalizationMessage(e.LocalCode, e.EmbeddingStrings...)
+	r := cwsbase.GetLocalizationMessage(e.LocalCode, e.EmbeddingStrings...)
 	if e.ActualError != nil {
 		r += " ActualError: " + e.ActualError.Error()
 	}
@@ -37,16 +37,16 @@ func (e *CWSError) Error() string {
 }
 
 func SetLocalizationData(jsonString string) {
-	baseutil.UpdateLocalizationData([]byte(jsonString))
+	cwsbase.UpdateLocalizationData([]byte(jsonString))
 }
 
 func ParseBody(c *gin.Context, data any) error {
 	err := c.ShouldBind(data)
 	if err != nil {
-		if baseutil.GetEnvironmentInfo().DebugMode {
-			return &CWSError{StatusCode: http.StatusBadRequest, LocalCode: baseutil.LocalCode_BadRequest, ActualError: err}
+		if cwsbase.GetEnvironmentInfo().DebugMode {
+			return &CWSError{StatusCode: http.StatusBadRequest, LocalCode: cwsbase.LocalCode_BadRequest, ActualError: err}
 		} else {
-			return &CWSError{StatusCode: http.StatusBadRequest, LocalCode: baseutil.LocalCode_BadRequest, ActualError: nil}
+			return &CWSError{StatusCode: http.StatusBadRequest, LocalCode: cwsbase.LocalCode_BadRequest, ActualError: nil}
 		}
 	}
 	return nil
@@ -63,7 +63,7 @@ func WrapHandler(fn func(ctx *gin.Context) error) gin.HandlerFunc {
 
 func HandleServiceErrors(c *gin.Context, err error) {
 	if e, ok := err.(*CWSError); ok {
-		if baseutil.GetEnvironmentInfo().DebugMode {
+		if cwsbase.GetEnvironmentInfo().DebugMode {
 			log.Println(e)
 		}
 
@@ -92,7 +92,7 @@ func StructToMap(obj any) (map[string]any, error) {
 }
 
 func StructToAttributeValueMap(s any, modify ...func(key string, val any) any) (map[string]types.AttributeValue, error) {
-	m, err := baseutil.StructToMapEscapeEmpty(s)
+	m, err := cwsbase.StructToMapEscapeEmpty(s)
 	if err != nil {
 		return nil, err
 	}
@@ -110,10 +110,10 @@ func StructToAttributeValueMap(s any, modify ...func(key string, val any) any) (
 	return result, nil
 }
 
-func WriteResponse(c *gin.Context, code int, localCode baseutil.LocalizationCode, data any, strs ...any) {
+func WriteResponse(c *gin.Context, code int, localCode cwsbase.LocalizationCode, data any, strs ...any) {
 	c.JSON(code, gin.H{
 		"code":    localCode,
-		"message": baseutil.GetLocalizationMessage(localCode, strs...),
+		"message": cwsbase.GetLocalizationMessage(localCode, strs...),
 		"data":    data,
 	})
 }
