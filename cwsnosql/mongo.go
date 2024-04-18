@@ -147,6 +147,25 @@ func (r *MongoDBRepository[PKey]) Find(ctx context.Context, pkey PKey, out any) 
 	return err
 }
 
+func (r *MongoDBRepository[PKey]) Exist(ctx context.Context, filter bson.M) (bool, error) {
+	collection, err := r.GetCollection(ctx)
+	if err != nil {
+		return false, err
+	}
+
+	//filter, err := marshalToBsonMap(pkey)
+	//if err != nil {
+	//	return false, err
+	//}
+
+	count, err := collection.CountDocuments(ctx, filter, nil)
+
+	if count > 0 {
+		return true, nil
+	}
+	return false, err
+}
+
 func (r *MongoDBRepository[PKey]) Delete(ctx context.Context, pkey PKey) error {
 	collection, err := r.GetCollection(ctx)
 	if err != nil {
