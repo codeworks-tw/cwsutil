@@ -2,7 +2,7 @@
  * File: mongo.go
  * Created Date: Thursday, April 11th 2024, 3:11:23 pm
  *
- * Last Modified: Mon Apr 15 2024
+ * Last Modified: Sun Apr 28 2024
  * Modified By: Howard Ling-Hao Kung
  *
  * Copyright (c) 2024 - Present Codeworks TW Ltd.
@@ -83,33 +83,14 @@ func (r *MongoDBRepository[PKey]) CreateSimpleUniqueAscendingIndex(ctx context.C
 		return err
 	}
 
+	temp := bson.D{}
 	for k := range keys {
-		keys[k] = 1 // set to ascending
-	}
-
-	c, err := collection.Indexes().List(ctx)
-	if err != nil {
-		return err
-	}
-	for c.TryNext(ctx) {
-		var m map[string]any
-		index := c.Current
-		index.Lookup("key").Unmarshal(&m)
-		check := true
-		for k := range m {
-			if _, ok := keys[k]; !ok {
-				check = false
-				break
-			}
-		}
-		if check {
-			return nil
-		}
+		temp = append(temp, bson.E{Key: k, Value: keys[k]})
 	}
 
 	// create index
 	model := mongo.IndexModel{
-		Keys:    keys,
+		Keys:    temp,
 		Options: options.Index().SetUnique(true),
 	}
 	_, err = collection.Indexes().CreateOne(ctx, model)
