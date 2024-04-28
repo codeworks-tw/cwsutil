@@ -147,6 +147,16 @@ func (r *MongoDBRepository[PKey]) Find(ctx context.Context, pkey PKey, out any) 
 	return err
 }
 
+func (r *MongoDBRepository[PKey]) FindWithFilter(ctx context.Context, filter bson.M, out any) error {
+	collection, err := r.GetCollection(ctx)
+	if err != nil {
+		return err
+	}
+
+	err = collection.FindOne(ctx, filter).Decode(out)
+	return err
+}
+
 func (r *MongoDBRepository[PKey]) Exist(ctx context.Context, filter bson.M) (bool, error) {
 	collection, err := r.GetCollection(ctx)
 	if err != nil {
