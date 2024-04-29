@@ -2,7 +2,7 @@
  * File: mongo.go
  * Created Date: Thursday, April 11th 2024, 3:11:23 pm
  *
- * Last Modified: Sun Apr 28 2024
+ * Last Modified: Mon Apr 29 2024
  * Modified By: Howard Ling-Hao Kung
  *
  * Copyright (c) 2024 - Present Codeworks TW Ltd.
@@ -111,6 +111,36 @@ func (r *MongoDBRepository[PKey]) Upsert(ctx context.Context, pkey PKey, doc any
 	update := bson.D{{"$set", doc}}
 	_, err = collection.UpdateOne(ctx, filter, update, options.Update().SetUpsert(true))
 	return err
+}
+
+func (r *MongoDBRepository[PKey]) AddValuesToSet(ctx context.Context, pkey PKey, key string, values ...any) (*mongo.UpdateResult, error) {
+	collection, err := r.GetCollection(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	filter, err := marshalToBsonMap(pkey)
+	if err != nil {
+		return nil, err
+	}
+
+	update := bson.D{{"$addToSet", map[string]any{key: map[string][]any{"$each": values}}}}
+	return collection.UpdateOne(ctx, filter, update)
+}
+
+func (r *MongoDBRepository[PKey]) PullValuesFromSet(ctx context.Context, pkey PKey, key string, values ...any) (*mongo.UpdateResult, error) {
+	collection, err := r.GetCollection(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	filter, err := marshalToBsonMap(pkey)
+	if err != nil {
+		return nil, err
+	}
+
+	update := bson.D{{"$pull", map[string]any{key: map[string][]any{"$in": values}}}}
+	return collection.UpdateOne(ctx, filter, update)
 }
 
 func (r *MongoDBRepository[PKey]) Find(ctx context.Context, pkey PKey, out any) error {
