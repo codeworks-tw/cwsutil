@@ -60,6 +60,10 @@ func (f LazyMongoFilter) Nin(key string, values ...any) LazyMongoFilter {
 	return f
 }
 
+func All() LazyMongoFilter {
+	return LazyMongoFilter{}
+}
+
 func Eq(key string, value any) LazyMongoFilter {
 	return LazyMongoFilter{}.Eq(key, value)
 }

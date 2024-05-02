@@ -69,22 +69,12 @@ func (r *LazyMongoRepository) Get(ctx context.Context, filter LazyMongoFilter, o
 	return collection.FindOne(ctx, filter.Build()).Decode(out)
 }
 
-func (r *LazyMongoRepository) Select(ctx context.Context, filter LazyMongoFilter) ([]any, error) {
+func (r *LazyMongoRepository) Select(ctx context.Context, filter LazyMongoFilter) (*mongo.Cursor, error) {
 	collection, err := r.GetCollection(ctx)
 	if err != nil {
 		return nil, err
 	}
-	cursor, err := collection.Find(ctx, filter.Build())
-	if err != nil {
-		return nil, err
-	}
-	arr := []any{}
-	for cursor.TryNext(ctx) {
-		var data any
-		cursor.Decode(&data)
-		arr = append(arr, data)
-	}
-	return arr, nil
+	return collection.Find(ctx, filter.Build())
 }
 
 func (r *LazyMongoRepository) Add(ctx context.Context, data any) (*mongo.InsertOneResult, error) {
