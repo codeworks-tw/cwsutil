@@ -2,7 +2,7 @@
  * File: nosql_test.go
  * Created Date: Friday, April 12th 2024, 4:45:03 pm
  *
- * Last Modified: Wed May 01 2024
+ * Last Modified: Thu May 02 2024
  * Modified By: Howard Ling-Hao Kung
  *
  * Copyright (c) 2024 - Present Codeworks TW Ltd.
@@ -16,6 +16,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/codeworks-tw/cwsutil/cwsnosql"
 	"github.com/codeworks-tw/cwsutil/cwsnosql/cwslazymongo"
 )
 
@@ -35,7 +36,79 @@ var RepositoryNoSqlTest = cwslazymongo.LazyMongoRepository{
 	CollectionName: "testnosqllazy",
 }
 
-func TestMongo(t *testing.T) {
+var RepositoryNoSqlTest2 = cwsnosql.MongoDBRepository[NoSqlTestItemKey]{
+	Url:            "mongodb://localhost:27017",
+	DbName:         "testnosql",
+	CollectionName: "testnosql",
+}
+
+func TestPkeyMongoRepo(t *testing.T) {
+	fmt.Println("\n================ Testing nosql pkey repo ================")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	item := NoSqlTestItem{
+		Id:   "1",
+		Name: "testname",
+		Tags: []string{},
+	}
+
+	pkey := NoSqlTestItemKey{
+		Id: "1",
+	}
+
+	err := RepositoryNoSqlTest2.CreateSimpleUniqueAscendingIndex(ctx)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	err = RepositoryNoSqlTest2.Upsert(ctx, pkey, item)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	r, err := RepositoryNoSqlTest2.AddValuesToSet(ctx, pkey, "tags", "t1", "t2")
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if r.MatchedCount == 0 {
+		t.Error("no match")
+		return
+	}
+
+	r, err = RepositoryNoSqlTest2.PullValuesFromSet(ctx, pkey, "tags", "t1")
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if r.MatchedCount == 0 {
+		t.Error("no match")
+		return
+	}
+
+	var data NoSqlTestItem
+	err = RepositoryNoSqlTest2.Find(ctx, pkey, &data)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if data.Id != "1" {
+		t.Error("no match")
+		return
+	}
+
+	err = RepositoryNoSqlTest2.Delete(ctx, pkey)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+}
+
+func TestLazyMongoRepo(t *testing.T) {
 	fmt.Println("\n================ Testing nosql lazy mongo repo ================")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -89,7 +162,10 @@ func TestMongo(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	fmt.Println(count)
+	if count == 0 {
+		t.Error("no match")
+		return
+	}
 
 	if exist, err := RepositoryNoSqlTest.Exist(ctx, cwslazymongo.Eq("id", "1")); err != nil {
 		t.Error(err)
@@ -115,7 +191,10 @@ func TestMongo(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	fmt.Println("Get Item:", data)
+	if data.Id != "1" {
+		t.Error("no match")
+		return
+	}
 
 	usr, err := RepositoryNoSqlTest.UpdateMany(ctx, cwslazymongo.Eq("tags", []string{}), cwslazymongo.AddToSet("tags", "t1", "t2"))
 	if err != nil {
@@ -132,21 +211,28 @@ func TestMongo(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	fmt.Println("Select Items: ", len(datas))
+	if len(datas) == 0 {
+		t.Error("no match")
+		return
+	}
 
 	d, err := RepositoryNoSqlTest.Delete(ctx, cwslazymongo.Eq("id", "1"))
 	if err != nil {
 		t.Error(err)
 		return
 	}
-	fmt.Println(d.DeletedCount)
+	if d.DeletedCount == 0 {
+		t.Error("no match")
+		return
+	}
 
 	ds, err := RepositoryNoSqlTest.DeleteMany(ctx, cwslazymongo.Eq("tags", []string{"t1", "t2"}))
 	if err != nil {
 		t.Error(err)
 		return
 	}
-	fmt.Println(ds.DeletedCount)
-
-	fmt.Println("\n================ Testing nosql repository end ================")
+	if ds.DeletedCount == 0 {
+		t.Error("no match")
+		return
+	}
 }

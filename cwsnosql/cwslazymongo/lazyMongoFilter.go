@@ -2,7 +2,7 @@
  * File: LazyMongoFilter.go
  * Created Date: Wednesday, May 1st 2024, 8:18:43 am
  *
- * Last Modified: Wed May 01 2024
+ * Last Modified: Thu May 02 2024
  * Modified By: Howard Ling-Hao Kung
  *
  * Copyright (c) 2024 - Present Codeworks TW Ltd.
@@ -140,9 +140,9 @@ func buildHelper(element any) any {
 			d[k] = buildHelper(v)
 		}
 		return d
-	case LazyMongoUpdate:
-		d := make(primitive.M, len(element.(LazyMongoUpdate)))
-		for k, v := range element.(LazyMongoUpdate) {
+	case LazyMongoUpdater:
+		d := make(primitive.M, len(element.(LazyMongoUpdater)))
+		for k, v := range element.(LazyMongoUpdater) {
 			d[k] = buildHelper(v)
 		}
 		return d

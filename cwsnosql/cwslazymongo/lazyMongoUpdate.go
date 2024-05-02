@@ -2,7 +2,7 @@
  * File: repoEs.go
  * Created Date: Tuesday, April 30th 2024, 8:17:31 pm
  *
- * Last Modified: Wed May 01 2024
+ * Last Modified: Thu May 02 2024
  * Modified By: Howard Ling-Hao Kung
  *
  * Copyright (c) 2024 - Present Codeworks TW Ltd.
@@ -14,29 +14,29 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-type LazyMongoUpdate primitive.M
+type LazyMongoUpdater primitive.M
 
-func (update LazyMongoUpdate) Set(doc any) LazyMongoUpdate {
+func (update LazyMongoUpdater) Set(doc any) LazyMongoUpdater {
 	update["$set"] = doc
 	return update
 }
 
-func (update LazyMongoUpdate) AddToSet(key string, values ...any) LazyMongoUpdate {
+func (update LazyMongoUpdater) AddToSet(key string, values ...any) LazyMongoUpdater {
 	update["$addToSet"] = primitive.M{key: primitive.M{"$each": values}}
 	return update
 }
 
-func (update LazyMongoUpdate) Pull(key string, values ...any) LazyMongoUpdate {
+func (update LazyMongoUpdater) Pull(key string, values ...any) LazyMongoUpdater {
 	update["$pull"] = primitive.M{key: primitive.M{"$in": values}}
 	return update
 }
 
-func (update LazyMongoUpdate) Push(key string, values ...any) LazyMongoUpdate {
+func (update LazyMongoUpdater) Push(key string, values ...any) LazyMongoUpdater {
 	update["$push"] = primitive.M{key: primitive.M{"$each": values}}
 	return update
 }
 
-func (update LazyMongoUpdate) Pop(key string, head bool) LazyMongoUpdate {
+func (update LazyMongoUpdater) Pop(key string, head bool) LazyMongoUpdater {
 	v := 1
 	if head {
 		v = -1
@@ -45,26 +45,26 @@ func (update LazyMongoUpdate) Pop(key string, head bool) LazyMongoUpdate {
 	return update
 }
 
-func (uE LazyMongoUpdate) Build() any {
+func (uE LazyMongoUpdater) Build() any {
 	return buildHelper(uE)
 }
 
-func Set(doc any) LazyMongoUpdate {
-	return LazyMongoUpdate{}.Set(doc)
+func Set(doc any) LazyMongoUpdater {
+	return LazyMongoUpdater{}.Set(doc)
 }
 
-func AddToSet(key string, values ...any) LazyMongoUpdate {
-	return LazyMongoUpdate{}.AddToSet(key, values...)
+func AddToSet(key string, values ...any) LazyMongoUpdater {
+	return LazyMongoUpdater{}.AddToSet(key, values...)
 }
 
-func Pull(key string, values ...any) LazyMongoUpdate {
-	return LazyMongoUpdate{}.Pull(key, values...)
+func Pull(key string, values ...any) LazyMongoUpdater {
+	return LazyMongoUpdater{}.Pull(key, values...)
 }
 
-func Push(key string, values ...any) LazyMongoUpdate {
-	return LazyMongoUpdate{}.Push(key, values...)
+func Push(key string, values ...any) LazyMongoUpdater {
+	return LazyMongoUpdater{}.Push(key, values...)
 }
 
-func Pop(key string, head bool) LazyMongoUpdate {
-	return LazyMongoUpdate{}.Pop(key, head)
+func Pop(key string, head bool) LazyMongoUpdater {
+	return LazyMongoUpdater{}.Pop(key, head)
 }

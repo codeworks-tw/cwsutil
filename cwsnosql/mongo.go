@@ -2,7 +2,7 @@
  * File: mongo.go
  * Created Date: Thursday, April 11th 2024, 3:11:23 pm
  *
- * Last Modified: Mon Apr 29 2024
+ * Last Modified: Thu May 02 2024
  * Modified By: Howard Ling-Hao Kung
  *
  * Copyright (c) 2024 - Present Codeworks TW Ltd.
@@ -14,43 +14,33 @@ import (
 	"context"
 	"sync"
 
+	"github.com/codeworks-tw/cwsutil/cwsnosql/cwslazymongo"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-var lock sync.Mutex = sync.Mutex{}
-
-var clients map[string]*mongo.Client = map[string]*mongo.Client{}
-
-func GetMongoSingletonClient(url string, ctx context.Context) (*mongo.Client, error) {
-	lock.Lock()
-	defer lock.Unlock()
-
-	if _, ok := clients[url]; !ok {
-		client, err := mongo.Connect(ctx, options.Client().ApplyURI(url))
-		if err != nil {
-			return client, err
-		}
-		clients[url] = client
-	}
-	return clients[url], nil
-}
-
-func CloseSingletonClient(url string, ctx context.Context) {
-	lock.Lock()
-	defer lock.Unlock()
-
-	if client, ok := clients[url]; ok {
-		client.Disconnect(ctx)
-		delete(clients, url)
-	}
-}
-
 type MongoDBRepository[PKey any] struct {
+	once           sync.Once
+	lazyRepo       cwslazymongo.LazyMongoRepository
 	Url            string
 	DbName         string
 	CollectionName string
+}
+
+func (r *MongoDBRepository[PKey]) ToLazyMongoRepository() *cwslazymongo.LazyMongoRepository {
+	r.once.Do(func() {
+		r.lazyRepo = cwslazymongo.LazyMongoRepository{
+			Url:            r.Url,
+			DbName:         r.DbName,
+			CollectionName: r.CollectionName,
+		}
+	})
+	return &r.lazyRepo
+}
+
+func (r *MongoDBRepository[PKey]) GetCollection(ctx context.Context) (*mongo.Collection, error) {
+	return r.ToLazyMongoRepository().GetCollection(ctx)
 }
 
 func marshalToBsonMap(data any) (bson.M, error) {
@@ -61,14 +51,6 @@ func marshalToBsonMap(data any) (bson.M, error) {
 	}
 	err = bson.Unmarshal(dataBytes, &m)
 	return m, err
-}
-
-func (r *MongoDBRepository[PKey]) GetCollection(ctx context.Context) (*mongo.Collection, error) {
-	client, err := GetMongoSingletonClient(r.Url, ctx)
-	if err != nil {
-		return nil, err
-	}
-	return client.Database(r.DbName).Collection(r.CollectionName), nil
 }
 
 func (r *MongoDBRepository[PKey]) CreateSimpleUniqueAscendingIndex(ctx context.Context) error {
@@ -85,7 +67,7 @@ func (r *MongoDBRepository[PKey]) CreateSimpleUniqueAscendingIndex(ctx context.C
 
 	temp := bson.D{}
 	for k := range keys {
-		temp = append(temp, bson.E{Key: k, Value: keys[k]})
+		temp = append(temp, bson.E{Key: k, Value: 1})
 	}
 
 	// create index
@@ -98,64 +80,37 @@ func (r *MongoDBRepository[PKey]) CreateSimpleUniqueAscendingIndex(ctx context.C
 }
 
 func (r *MongoDBRepository[PKey]) Upsert(ctx context.Context, pkey PKey, doc any) error {
-	collection, err := r.GetCollection(ctx)
+	filter, err := cwslazymongo.MarshalToFilter(pkey)
 	if err != nil {
 		return err
 	}
 
-	filter, err := marshalToBsonMap(pkey)
-	if err != nil {
-		return err
-	}
-
-	update := bson.D{{"$set", doc}}
-	_, err = collection.UpdateOne(ctx, filter, update, options.Update().SetUpsert(true))
+	_, err = r.ToLazyMongoRepository().Upsert(ctx, filter, cwslazymongo.Set((doc)))
 	return err
 }
 
 func (r *MongoDBRepository[PKey]) AddValuesToSet(ctx context.Context, pkey PKey, key string, values ...any) (*mongo.UpdateResult, error) {
-	collection, err := r.GetCollection(ctx)
+	filter, err := cwslazymongo.MarshalToFilter(pkey)
 	if err != nil {
 		return nil, err
 	}
-
-	filter, err := marshalToBsonMap(pkey)
-	if err != nil {
-		return nil, err
-	}
-
-	update := bson.D{{"$addToSet", map[string]any{key: map[string][]any{"$each": values}}}}
-	return collection.UpdateOne(ctx, filter, update)
+	return r.ToLazyMongoRepository().Update(ctx, filter, cwslazymongo.AddToSet(key, values...))
 }
 
 func (r *MongoDBRepository[PKey]) PullValuesFromSet(ctx context.Context, pkey PKey, key string, values ...any) (*mongo.UpdateResult, error) {
-	collection, err := r.GetCollection(ctx)
+	filter, err := cwslazymongo.MarshalToFilter(pkey)
 	if err != nil {
 		return nil, err
 	}
-
-	filter, err := marshalToBsonMap(pkey)
-	if err != nil {
-		return nil, err
-	}
-
-	update := bson.D{{"$pull", map[string]any{key: map[string][]any{"$in": values}}}}
-	return collection.UpdateOne(ctx, filter, update)
+	return r.ToLazyMongoRepository().Update(ctx, filter, cwslazymongo.Pull(key, values...))
 }
 
 func (r *MongoDBRepository[PKey]) Find(ctx context.Context, pkey PKey, out any) error {
-	collection, err := r.GetCollection(ctx)
+	filter, err := cwslazymongo.MarshalToFilter(pkey)
 	if err != nil {
 		return err
 	}
-
-	filter, err := marshalToBsonMap(pkey)
-	if err != nil {
-		return err
-	}
-
-	err = collection.FindOne(ctx, filter).Decode(out)
-	return err
+	return r.ToLazyMongoRepository().Get(ctx, filter, out)
 }
 
 func (r *MongoDBRepository[PKey]) FindWithFilter(ctx context.Context, filter bson.M, out any) error {
@@ -188,16 +143,10 @@ func (r *MongoDBRepository[PKey]) Exist(ctx context.Context, filter bson.M) (boo
 }
 
 func (r *MongoDBRepository[PKey]) Delete(ctx context.Context, pkey PKey) error {
-	collection, err := r.GetCollection(ctx)
+	filter, err := cwslazymongo.MarshalToFilter(pkey)
 	if err != nil {
 		return err
 	}
-
-	filter, err := marshalToBsonMap(pkey)
-	if err != nil {
-		return err
-	}
-
-	_, err = collection.DeleteOne(ctx, filter)
+	_, err = r.ToLazyMongoRepository().Delete(ctx, filter)
 	return err
 }

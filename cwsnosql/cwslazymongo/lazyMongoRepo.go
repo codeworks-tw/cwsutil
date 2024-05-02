@@ -2,7 +2,7 @@
  * File: repo.go
  * Created Date: Tuesday, April 30th 2024, 4:44:31 pm
  *
- * Last Modified: Wed May 01 2024
+ * Last Modified: Thu May 02 2024
  * Modified By: Howard Ling-Hao Kung
  *
  * Copyright (c) 2024 - Present Codeworks TW Ltd.
@@ -14,6 +14,7 @@ import (
 	"context"
 	"sync"
 
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -102,7 +103,7 @@ func (r *LazyMongoRepository) AddMany(ctx context.Context, data []any) (*mongo.I
 	return collection.InsertMany(ctx, data)
 }
 
-func (r *LazyMongoRepository) Update(ctx context.Context, filter LazyMongoFilter, update LazyMongoUpdate) (*mongo.UpdateResult, error) {
+func (r *LazyMongoRepository) Update(ctx context.Context, filter LazyMongoFilter, update LazyMongoUpdater) (*mongo.UpdateResult, error) {
 	collection, err := r.GetCollection(ctx)
 	if err != nil {
 		return nil, err
@@ -110,7 +111,7 @@ func (r *LazyMongoRepository) Update(ctx context.Context, filter LazyMongoFilter
 	return collection.UpdateOne(ctx, filter.Build(), update.Build())
 }
 
-func (r *LazyMongoRepository) UpdateMany(ctx context.Context, filter LazyMongoFilter, update LazyMongoUpdate) (*mongo.UpdateResult, error) {
+func (r *LazyMongoRepository) UpdateMany(ctx context.Context, filter LazyMongoFilter, update LazyMongoUpdater) (*mongo.UpdateResult, error) {
 	collection, err := r.GetCollection(ctx)
 	if err != nil {
 		return nil, err
@@ -150,10 +151,24 @@ func (r *LazyMongoRepository) Count(ctx context.Context, filter LazyMongoFilter)
 	return collection.CountDocuments(ctx, filter.Build())
 }
 
-func (r *LazyMongoRepository) Upsert(ctx context.Context, filter LazyMongoFilter, update LazyMongoUpdate) (*mongo.UpdateResult, error) {
+func (r *LazyMongoRepository) Upsert(ctx context.Context, filter LazyMongoFilter, update LazyMongoUpdater) (*mongo.UpdateResult, error) {
 	collection, err := r.GetCollection(ctx)
 	if err != nil {
 		return nil, err
 	}
 	return collection.UpdateOne(ctx, filter.Build(), update.Build(), options.Update().SetUpsert(true))
+}
+
+func MarshalToFilter(data any) (LazyMongoFilter, error) {
+	m := LazyMongoFilter{}
+	dataBytes, err := bson.Marshal(data)
+	if err != nil {
+		return nil, err
+	}
+	err = bson.Unmarshal(dataBytes, &m)
+	return m, err
+}
+
+func MarshalToUpdater(data any) LazyMongoUpdater {
+	return Set(data)
 }
