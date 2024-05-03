@@ -2,7 +2,7 @@
  * File: LazyMongoFilter.go
  * Created Date: Wednesday, May 1st 2024, 8:18:43 am
  *
- * Last Modified: Thu May 02 2024
+ * Last Modified: Fri May 03 2024
  * Modified By: Howard Ling-Hao Kung
  *
  * Copyright (c) 2024 - Present Codeworks TW Ltd.
@@ -14,50 +14,38 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-type LazyMongoFilter primitive.M
+type LazyMongoFilter primitive.D
 
 func (f LazyMongoFilter) Eq(key string, value any) LazyMongoFilter {
-	f[key] = primitive.M{"$eq": value}
-	return f
+	return append(f, primitive.E{Key: key, Value: primitive.D{primitive.E{Key: "$eq", Value: value}}})
 }
 
 func (f LazyMongoFilter) Ne(key string, value any) LazyMongoFilter {
-	f[key] = primitive.M{"$ne": value}
-	return f
+	return append(f, primitive.E{Key: key, Value: primitive.D{primitive.E{Key: "$ne", Value: value}}})
 }
 
 func (f LazyMongoFilter) Gt(key string, value any) LazyMongoFilter {
-	f[key] = primitive.M{"$gt": value}
-	return f
+	return append(f, primitive.E{Key: key, Value: primitive.D{primitive.E{Key: "$gt", Value: value}}})
 }
 
 func (f LazyMongoFilter) Gte(key string, value any) LazyMongoFilter {
-	f[key] = primitive.M{"$gte": value}
-	return f
+	return append(f, primitive.E{Key: key, Value: primitive.D{primitive.E{Key: "$gte", Value: value}}})
 }
 
 func (f LazyMongoFilter) Lt(key string, value any) LazyMongoFilter {
-	f[key] = primitive.M{"$lt": value}
-	return f
+	return append(f, primitive.E{Key: key, Value: primitive.D{primitive.E{Key: "$lt", Value: value}}})
 }
 
 func (f LazyMongoFilter) Lte(key string, value any) LazyMongoFilter {
-	f[key] = primitive.M{"$lte": value}
-	return f
+	return append(f, primitive.E{Key: key, Value: primitive.D{primitive.E{Key: "$lte", Value: value}}})
 }
 
 func (f LazyMongoFilter) In(key string, values ...any) LazyMongoFilter {
-	a := make(primitive.A, len(values))
-	copy(a, values)
-	f[key] = primitive.M{"$in": a}
-	return f
+	return append(f, primitive.E{Key: key, Value: primitive.D{primitive.E{Key: "$in", Value: values}}})
 }
 
 func (f LazyMongoFilter) Nin(key string, values ...any) LazyMongoFilter {
-	a := make(primitive.A, len(values))
-	copy(a, values)
-	f[key] = primitive.M{"$nin": a}
-	return f
+	return append(f, primitive.E{Key: key, Value: primitive.D{primitive.E{Key: "$nin", Value: values}}})
 }
 
 func All() LazyMongoFilter {
@@ -97,33 +85,27 @@ func Nin(key string, values ...any) LazyMongoFilter {
 }
 
 func And(filters ...LazyMongoFilter) LazyMongoFilter {
-	temp := primitive.A{}
-	for _, v := range filters {
-		temp = append(temp, v)
+	return LazyMongoFilter{
+		primitive.E{Key: "$and", Value: filters},
 	}
-	return LazyMongoFilter{"$and": temp}
 }
 
 func Or(filters ...LazyMongoFilter) LazyMongoFilter {
-	temp := primitive.A{}
-	for _, v := range filters {
-		temp = append(temp, v)
+	return LazyMongoFilter{
+		primitive.E{Key: "$or", Value: filters},
 	}
-	return LazyMongoFilter{"$or": temp}
 }
 
 func Nor(filters ...LazyMongoFilter) LazyMongoFilter {
-	temp := primitive.A{}
-	for _, v := range filters {
-		temp = append(temp, v)
+	return LazyMongoFilter{
+		primitive.E{Key: "$nor", Value: filters},
 	}
-	return LazyMongoFilter{"$nor": temp}
 }
 
 func Not(filter LazyMongoFilter) LazyMongoFilter {
-	r := LazyMongoFilter{}
-	for k, v := range filter {
-		r[k] = primitive.M{"$not": v}
+	r := make(LazyMongoFilter, len(filter))
+	for i, e := range filter {
+		r[i] = primitive.E{Key: e.Key, Value: primitive.D{primitive.E{Key: "$not", Value: e.Value}}}
 	}
 	return r
 }
@@ -139,15 +121,15 @@ func buildHelper(element any) any {
 			element.(primitive.A)[i] = buildHelper(e)
 		}
 	case LazyMongoFilter:
-		d := make(primitive.M, len(element.(LazyMongoFilter)))
-		for k, v := range element.(LazyMongoFilter) {
-			d[k] = buildHelper(v)
+		d := primitive.D{}
+		for _, v := range element.(LazyMongoFilter) {
+			d = append(d, buildHelper(v).(primitive.E))
 		}
 		return d
 	case LazyMongoUpdater:
-		d := make(primitive.M, len(element.(LazyMongoUpdater)))
-		for k, v := range element.(LazyMongoUpdater) {
-			d[k] = buildHelper(v)
+		d := primitive.D{}
+		for _, v := range element.(LazyMongoUpdater) {
+			d = append(d, buildHelper(v).(primitive.E))
 		}
 		return d
 	case primitive.D:

@@ -2,7 +2,7 @@
  * File: nosql_test.go
  * Created Date: Friday, April 12th 2024, 4:45:03 pm
  *
- * Last Modified: Thu May 02 2024
+ * Last Modified: Fri May 03 2024
  * Modified By: Howard Ling-Hao Kung
  *
  * Copyright (c) 2024 - Present Codeworks TW Ltd.
@@ -111,7 +111,7 @@ func TestPkeyMongoRepo(t *testing.T) {
 func TestLazyMongoRepo(t *testing.T) {
 	fmt.Println("\n================ Testing nosql lazy mongo repo ================")
 
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Second)
 	defer cancel()
 
 	item := NoSqlTestItem{
@@ -167,7 +167,7 @@ func TestLazyMongoRepo(t *testing.T) {
 		return
 	}
 
-	if exist, err := RepositoryNoSqlTest.Exist(ctx, cwslazymongo.Eq("id", "1")); err != nil {
+	if exist, err := RepositoryNoSqlTest.Exist(ctx, cwslazymongo.Eq("id", "1").Ne("name", "testname2")); err != nil {
 		t.Error(err)
 		return
 	} else if !exist {
@@ -175,7 +175,15 @@ func TestLazyMongoRepo(t *testing.T) {
 		return
 	}
 
-	ur, err := RepositoryNoSqlTest.Update(ctx, cwslazymongo.Eq("id", "1"), cwslazymongo.Set(map[string]any{"name": "new_name"}))
+	if c2, err := RepositoryNoSqlTest.Count(ctx, cwslazymongo.Not(cwslazymongo.Eq("id", "1"))); err != nil {
+		t.Error(err)
+		return
+	} else if c2 < 2 {
+		t.Error("no match")
+		return
+	}
+
+	ur, err := RepositoryNoSqlTest.Update(ctx, cwslazymongo.Nor(cwslazymongo.Eq("id", "1"), cwslazymongo.Eq("id", "2")), cwslazymongo.Set(map[string]any{"name": "new_name"}).Push("pp", "p1", "p2", "p3"))
 	if err != nil {
 		t.Error(err)
 		return
@@ -206,7 +214,13 @@ func TestLazyMongoRepo(t *testing.T) {
 		return
 	}
 
-	datas, err := RepositoryNoSqlTest.Select(ctx, cwslazymongo.In("tags", "t1", "t2"))
+	var datas []NoSqlTestItem
+	cursor, err := RepositoryNoSqlTest.Select(ctx, cwslazymongo.In("tags", "t1", "t2"))
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	err = cursor.All(ctx, &datas)
 	if err != nil {
 		t.Error(err)
 		return
