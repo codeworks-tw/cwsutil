@@ -61,92 +61,88 @@ func (r *LazyMongoRepository) GetCollection(ctx context.Context) (*mongo.Collect
 	return client.Database(r.DbName).Collection(r.CollectionName), nil
 }
 
-func (r *LazyMongoRepository) Get(ctx context.Context, filter LazyMongoFilter, out any) error {
+func (r *LazyMongoRepository) Get(ctx context.Context, filter LazyMongoFilter, out any, opts ...*options.FindOneOptions) error {
 	collection, err := r.GetCollection(ctx)
 	if err != nil {
 		return err
 	}
-	return collection.FindOne(ctx, filter.Build()).Decode(out)
+	return collection.FindOne(ctx, filter.Build(), opts...).Decode(out)
 }
 
-func (r *LazyMongoRepository) Select(ctx context.Context, filter LazyMongoFilter) (*mongo.Cursor, error) {
+func (r *LazyMongoRepository) Select(ctx context.Context, filter LazyMongoFilter, opts ...*options.FindOptions) (*mongo.Cursor, error) {
 	collection, err := r.GetCollection(ctx)
 	if err != nil {
 		return nil, err
 	}
-	return collection.Find(ctx, filter.Build())
+	return collection.Find(ctx, filter.Build(), opts...)
 }
 
-func (r *LazyMongoRepository) Add(ctx context.Context, data any) (*mongo.InsertOneResult, error) {
+func (r *LazyMongoRepository) Add(ctx context.Context, data any, opts ...*options.InsertOneOptions) (*mongo.InsertOneResult, error) {
 	collection, err := r.GetCollection(ctx)
 	if err != nil {
 		return nil, err
 	}
-	return collection.InsertOne(ctx, data)
+	return collection.InsertOne(ctx, data, opts...)
 }
 
-func (r *LazyMongoRepository) AddMany(ctx context.Context, data []any) (*mongo.InsertManyResult, error) {
+func (r *LazyMongoRepository) AddMany(ctx context.Context, data []any, opts ...*options.InsertManyOptions) (*mongo.InsertManyResult, error) {
 	collection, err := r.GetCollection(ctx)
 	if err != nil {
 		return nil, err
 	}
-	return collection.InsertMany(ctx, data)
+	return collection.InsertMany(ctx, data, opts...)
 }
 
-func (r *LazyMongoRepository) Update(ctx context.Context, filter LazyMongoFilter, update LazyMongoUpdater) (*mongo.UpdateResult, error) {
+func (r *LazyMongoRepository) Update(ctx context.Context, filter LazyMongoFilter, update LazyMongoUpdater, opts ...*options.UpdateOptions) (*mongo.UpdateResult, error) {
 	collection, err := r.GetCollection(ctx)
 	if err != nil {
 		return nil, err
 	}
-	return collection.UpdateOne(ctx, filter.Build(), update.Build())
+	return collection.UpdateOne(ctx, filter.Build(), update.Build(), opts...)
 }
 
-func (r *LazyMongoRepository) UpdateMany(ctx context.Context, filter LazyMongoFilter, update LazyMongoUpdater) (*mongo.UpdateResult, error) {
+func (r *LazyMongoRepository) UpdateMany(ctx context.Context, filter LazyMongoFilter, update LazyMongoUpdater, opts ...*options.UpdateOptions) (*mongo.UpdateResult, error) {
 	collection, err := r.GetCollection(ctx)
 	if err != nil {
 		return nil, err
 	}
-	return collection.UpdateMany(ctx, filter.Build(), update.Build())
+	return collection.UpdateMany(ctx, filter.Build(), update.Build(), opts...)
 }
 
-func (r *LazyMongoRepository) Delete(ctx context.Context, filter LazyMongoFilter) (*mongo.DeleteResult, error) {
+func (r *LazyMongoRepository) Delete(ctx context.Context, filter LazyMongoFilter, opts ...*options.DeleteOptions) (*mongo.DeleteResult, error) {
 	collection, err := r.GetCollection(ctx)
 	if err != nil {
 		return nil, err
 	}
-	return collection.DeleteOne(ctx, filter.Build())
+	return collection.DeleteOne(ctx, filter.Build(), opts...)
 }
 
-func (r *LazyMongoRepository) DeleteMany(ctx context.Context, filter LazyMongoFilter) (*mongo.DeleteResult, error) {
+func (r *LazyMongoRepository) DeleteMany(ctx context.Context, filter LazyMongoFilter, opts ...*options.DeleteOptions) (*mongo.DeleteResult, error) {
 	collection, err := r.GetCollection(ctx)
 	if err != nil {
 		return nil, err
 	}
-	return collection.DeleteMany(ctx, filter.Build())
+	return collection.DeleteMany(ctx, filter.Build(), opts...)
 }
 
-func (r *LazyMongoRepository) Exist(ctx context.Context, filter LazyMongoFilter) (bool, error) {
-	count, err := r.Count(ctx, filter)
+func (r *LazyMongoRepository) Exist(ctx context.Context, filter LazyMongoFilter, opts ...*options.CountOptions) (bool, error) {
+	count, err := r.Count(ctx, filter, opts...)
 	if err != nil {
 		return false, err
 	}
 	return count > 0, nil
 }
 
-func (r *LazyMongoRepository) Count(ctx context.Context, filter LazyMongoFilter) (int64, error) {
+func (r *LazyMongoRepository) Count(ctx context.Context, filter LazyMongoFilter, opts ...*options.CountOptions) (int64, error) {
 	collection, err := r.GetCollection(ctx)
 	if err != nil {
 		return 0, err
 	}
-	return collection.CountDocuments(ctx, filter.Build())
+	return collection.CountDocuments(ctx, filter.Build(), opts...)
 }
 
 func (r *LazyMongoRepository) Upsert(ctx context.Context, filter LazyMongoFilter, update LazyMongoUpdater) (*mongo.UpdateResult, error) {
-	collection, err := r.GetCollection(ctx)
-	if err != nil {
-		return nil, err
-	}
-	return collection.UpdateOne(ctx, filter.Build(), update.Build(), options.Update().SetUpsert(true))
+	return r.Update(ctx, filter, update, options.Update().SetUpsert(true))
 }
 
 func MarshalToFilter(data any) (LazyMongoFilter, error) {
