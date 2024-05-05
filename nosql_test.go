@@ -2,7 +2,7 @@
  * File: nosql_test.go
  * Created Date: Friday, April 12th 2024, 4:45:03 pm
  *
- * Last Modified: Fri May 03 2024
+ * Last Modified: Sun May 05 2024
  * Modified By: Howard Ling-Hao Kung
  *
  * Copyright (c) 2024 - Present Codeworks TW Ltd.
@@ -111,7 +111,7 @@ func TestPkeyMongoRepo(t *testing.T) {
 func TestLazyMongoRepo(t *testing.T) {
 	fmt.Println("\n================ Testing nosql lazy mongo repo ================")
 
-	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	item := NoSqlTestItem{

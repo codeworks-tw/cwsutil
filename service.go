@@ -2,7 +2,7 @@
  * File: service.go
  * Created Date: Wednesday, February 14th 2024, 9:56:18 am
  *
- * Last Modified: Fri Apr 12 2024
+ * Last Modified: Sun May 05 2024
  * Modified By: Howard Ling-Hao Kung
  *
  * Copyright (c) 2024 - Present Codeworks TW Ltd.
@@ -29,7 +29,7 @@ type CWSError struct {
 	ActualError      error
 }
 
-func (e *CWSError) Error() string {
+func (e CWSError) Error() string {
 	r := cwsbase.GetLocalizationMessage(e.LocalCode, e.EmbeddingStrings...)
 	if e.ActualError != nil {
 		r += " ActualError: " + e.ActualError.Error()
@@ -69,9 +69,9 @@ func HandleServiceErrors(c *gin.Context, err error) {
 		}
 
 		if e.ActualError != nil {
-			WriteResponse(c, e.StatusCode, e.LocalCode, e.ActualError.Error())
+			WriteResponse(c, e.StatusCode, e.LocalCode, e.ActualError.Error(), e.EmbeddingStrings...)
 		} else {
-			WriteResponse(c, e.StatusCode, e.LocalCode, nil)
+			WriteResponse(c, e.StatusCode, e.LocalCode, nil, e.EmbeddingStrings...)
 		}
 		return
 	}
