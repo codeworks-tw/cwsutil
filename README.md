@@ -50,7 +50,7 @@ var CHandlerGetData gin.HandlerFunc = cwsutil.WrapHandler(func(ctx *gin.Context)
 
     // 處理找不到 id = "1" 的 data
     if err == mongo.ErrNoDocuments {
-        return cwsutil.CWSError{
+        return &cwsutil.CWSError{
             StatusCode: http.StatusNotFound,
             LocalCode:  LocalCode_DataNotFound,
             EmbeddingStrings: []string{id},
