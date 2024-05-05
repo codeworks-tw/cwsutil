@@ -19,7 +19,7 @@
 
 ## ㄧ： 實作 Gin API Handler 完成統一的錯誤處理
 
-1. 實作多語系 json 資料，如下範例，可使用環境變數 LOCALIZATION_LANGUAGE=zh_tw 設定中文，預設為 "en" :
+1. 實作多語系 json 資料，如下範例，可使用環境變數 LOCALIZATION_LANGUAGE=zh_tw 設定使用中文，預設為 "en" :
 
 ```go
 import "github.com/codeworks-tw/cwsutil/cwsbase"
@@ -40,7 +40,7 @@ const LocalizationData string = `{
 cwsbase.UpdateLocalizationData([]byte(LocalizationData))  // 更新 cwsbase 多語系目錄
 ```
 
-2. 使用 cwsutil.WrapHandler 包裝 api handler 來統一 Handle Custom Error cwsutil.CWSError，以達到統一規範回傳錯誤情況的 response body，如以下範例:
+2. 使用 cwsutil.WrapHandler 包裝 api handler 來統一 Handle Custom Error cwsutil.CWSError，以達到統一的錯誤 response body，如以下範例:
   
 ```go
 var CHandlerGetData gin.HandlerFunc = cwsutil.WrapHandler(func(ctx *gin.Context) error {
@@ -57,7 +57,7 @@ var CHandlerGetData gin.HandlerFunc = cwsutil.WrapHandler(func(ctx *gin.Context)
             ActualError: err  // 通常情況不指定此參數，必要時可以使用此參數在 data 欄位回傳真正的錯誤 message
         }
     } else { // 處理其他錯誤
-        return err  // 回傳 500 Internal Server Error 並記錄 Erro Log
+        return err  // 回傳 500 Internal Server Error 並記錄 Error Log
     }
 
     cwsutil.WriteResponse(ctx, http.StatusOK, cwsbase.LocalCode_OK, data)
