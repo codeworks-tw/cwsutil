@@ -17,7 +17,7 @@
 
 # 使用方法
 
-## ㄧ： 實作 API 完成統一規範的錯誤處理
+## ㄧ： 實作 Gin API Handler 完成統一的錯誤處理
 
 1. 實作多語系 json 資料，如下範例，可使用環境變數 LOCALIZATION_LANGUAGE=zh_tw 設定中文，預設為 "en" :
 
@@ -25,16 +25,16 @@
 import "github.com/codeworks-tw/cwsutil/cwsbase"
 
 const (
-	LocalCode_DataNotFound    cwsbase.LocalizationCode = "10000"
+    LocalCode_DataNotFound    cwsbase.LocalizationCode = "10000"
 )
 
 const LocalizationData string = `{
-	"en": {
-		"10000": "Data not found - Id: %s",
-	},
-	"zh_tw": {
-		"10000": "資料不存在 - Id: %s",
-	}
+    "en": {
+        "10000": "Data not found - Id: %s",
+    },
+    "zh_tw": {
+        "10000": "資料不存在 - Id: %s",
+    }
 }`
 
 cwsbase.UpdateLocalizationData([]byte(LocalizationData))  // 更新 cwsbase 多語系目錄
@@ -45,21 +45,21 @@ cwsbase.UpdateLocalizationData([]byte(LocalizationData))  // 更新 cwsbase 多�
 ```go
 var CHandlerGetData gin.HandlerFunc = cwsutil.WrapHandler(func(ctx *gin.Context) error {
     id := "1"
-	var data DataItem
-	err := RepositoryData.ToLazyMongoRepository().Get(ctx, cwslazymongo.Eq("_id", id), &data)
+    var data DataItem
+    err := RepositoryData.ToLazyMongoRepository().Get(ctx, cwslazymongo.Eq("_id", id), &data)
 
     // 處理找不到 id = "1" 的 data
-	if err == mongo.ErrNoDocuments {
-		return cwsutil.CWSError{
-			StatusCode: http.StatusNotFound,
-			LocalCode:  LocalCode_DataNotFound,
+    if err == mongo.ErrNoDocuments {
+        return cwsutil.CWSError{
+            StatusCode: http.StatusNotFound,
+            LocalCode:  LocalCode_DataNotFound,
             EmbeddingStrings: []string{id},
             ActualError: err  // 通常情況不指定此參數，必要時可以使用此參數在 data 欄位回傳真正的錯誤 message
-		}
-	}
+        }
+    }
 
-	cwsutil.WriteResponse(ctx, http.StatusOK, cwsbase.LocalCode_OK, data)
-	return nil
+    cwsutil.WriteResponse(ctx, http.StatusOK, cwsbase.LocalCode_OK, data)
+    return nil
 })
 ```
 
