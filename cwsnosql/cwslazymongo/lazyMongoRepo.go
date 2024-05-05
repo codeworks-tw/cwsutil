@@ -2,7 +2,7 @@
  * File: repo.go
  * Created Date: Tuesday, April 30th 2024, 4:44:31 pm
  *
- * Last Modified: Fri May 03 2024
+ * Last Modified: Sun May 05 2024
  * Modified By: Howard Ling-Hao Kung
  *
  * Copyright (c) 2024 - Present Codeworks TW Ltd.
@@ -15,6 +15,7 @@ import (
 	"sync"
 
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -59,6 +60,37 @@ func (r *LazyMongoRepository) GetCollection(ctx context.Context) (*mongo.Collect
 		return nil, err
 	}
 	return client.Database(r.DbName).Collection(r.CollectionName), nil
+}
+
+func (r *LazyMongoRepository) CreateSimpleAscendingIndex(ctx context.Context, key string, opts ...*options.CreateIndexesOptions) (string, error) {
+	model := mongo.IndexModel{
+		Keys: LazyMongoFilter{primitive.E{Key: key, Value: 1}}.Build(),
+	}
+	return r.CreateIndex(ctx, model, opts...)
+}
+
+func (r *LazyMongoRepository) CreateSimpleUniqueAscendingIndex(ctx context.Context, key string, opts ...*options.CreateIndexesOptions) (string, error) {
+	model := mongo.IndexModel{
+		Keys:    LazyMongoFilter{primitive.E{Key: key, Value: 1}}.Build(),
+		Options: options.Index().SetUnique(true),
+	}
+	return r.CreateIndex(ctx, model, opts...)
+}
+
+func (r *LazyMongoRepository) CreateIndex(ctx context.Context, model mongo.IndexModel, opts ...*options.CreateIndexesOptions) (string, error) {
+	collection, err := r.GetCollection(ctx)
+	if err != nil {
+		return "", err
+	}
+	return collection.Indexes().CreateOne(ctx, model, opts...)
+}
+
+func (r *LazyMongoRepository) DeleteIndex(ctx context.Context, indexName string, opts ...*options.DropIndexesOptions) (bson.Raw, error) {
+	collection, err := r.GetCollection(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return collection.Indexes().DropOne(ctx, indexName, opts...)
 }
 
 func (r *LazyMongoRepository) Get(ctx context.Context, filter LazyMongoFilter, out any, opts ...*options.FindOneOptions) error {

@@ -114,13 +114,25 @@ func TestLazyMongoRepo(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
+	index, err := RepositoryNoSqlTest.CreateSimpleUniqueAscendingIndex(ctx, "name")
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	_, err = RepositoryNoSqlTest.DeleteIndex(ctx, index)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
 	item := NoSqlTestItem{
 		Id:   "1",
 		Name: "testname",
 		Tags: []string{},
 	}
 
-	_, err := RepositoryNoSqlTest.Add(ctx, NoSqlTestItem{
+	_, err = RepositoryNoSqlTest.Add(ctx, NoSqlTestItem{
 		Id:   "2",
 		Name: "testname2",
 		Tags: []string{},
