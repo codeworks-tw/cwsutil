@@ -45,9 +45,9 @@ func ParseBody(c *gin.Context, data any) error {
 	err := c.ShouldBind(data)
 	if err != nil {
 		if cwsbase.GetEnvironmentInfo().DebugMode {
-			return &CWSError{StatusCode: http.StatusBadRequest, LocalCode: cwsbase.LocalCode_BadRequest, ActualError: err}
+			return CWSError{StatusCode: http.StatusBadRequest, LocalCode: cwsbase.LocalCode_BadRequest, ActualError: err}
 		} else {
-			return &CWSError{StatusCode: http.StatusBadRequest, LocalCode: cwsbase.LocalCode_BadRequest, ActualError: nil}
+			return CWSError{StatusCode: http.StatusBadRequest, LocalCode: cwsbase.LocalCode_BadRequest, ActualError: nil}
 		}
 	}
 	return nil
@@ -63,7 +63,7 @@ func WrapHandler(fn func(ctx *gin.Context) error) gin.HandlerFunc {
 }
 
 func HandleServiceErrors(c *gin.Context, err error) {
-	if e, ok := err.(*CWSError); ok {
+	if e, ok := err.(CWSError); ok {
 		if cwsbase.GetEnvironmentInfo().DebugMode {
 			log.Println(e)
 		}
