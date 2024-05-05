@@ -56,6 +56,8 @@ var CHandlerGetData gin.HandlerFunc = cwsutil.WrapHandler(func(ctx *gin.Context)
             EmbeddingStrings: []string{id},
             ActualError: err  // 通常情況不指定此參數，必要時可以使用此參數在 data 欄位回傳真正的錯誤 message
         }
+    } else { // 處理其他錯誤
+        return err  // 回傳 500 Internal Server Error 並記錄 Erro Log
     }
 
     cwsutil.WriteResponse(ctx, http.StatusOK, cwsbase.LocalCode_OK, data)
