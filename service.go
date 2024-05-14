@@ -118,3 +118,15 @@ func WriteResponse(c *gin.Context, code int, localCode cwsbase.LocalizationCode,
 		"data":    data,
 	})
 }
+
+func IsStringInSlice(val string, ss []string) bool {
+	if len(val) == 0 {
+		return false
+	}
+	for _, s := range ss {
+		if val == s {
+			return true
+		}
+	}
+	return false
+}
