@@ -20,6 +20,10 @@ func (update LazyMongoUpdater) SetKey(key string, value any) LazyMongoUpdater {
 	return append(update, primitive.E{Key: "$set", Value: primitive.D{primitive.E{Key: key, Value: value}}})
 }
 
+func (update LazyMongoUpdater) Inc(key string, value int) LazyMongoUpdater {
+	return append(update, primitive.E{Key: "$inc", Value: primitive.D{primitive.E{Key: key, Value: value}}})
+}
+
 func (update LazyMongoUpdater) Set(doc any) LazyMongoUpdater {
 	return append(update, primitive.E{Key: "$set", Value: doc})
 }
@@ -58,6 +62,10 @@ func (uE LazyMongoUpdater) Build() any {
 
 func Set(doc any) LazyMongoUpdater {
 	return LazyMongoUpdater{}.Set(doc)
+}
+
+func Inc(key string, value int) LazyMongoUpdater {
+	return LazyMongoUpdater{}.Inc(key, value)
 }
 
 func SetKey(key string, value any) LazyMongoUpdater {
