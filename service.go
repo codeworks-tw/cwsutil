@@ -2,7 +2,7 @@
  * File: service.go
  * Created Date: Wednesday, February 14th 2024, 9:56:18 am
  *
- * Last Modified: Sun May 05 2024
+ * Last Modified: Sun May 19 2024
  * Modified By: Howard Ling-Hao Kung
  *
  * Copyright (c) 2024 - Present Codeworks TW Ltd.
@@ -17,6 +17,7 @@ import (
 
 	"github.com/codeworks-tw/cwsutil/cwsbase"
 	"github.com/gin-gonic/gin"
+	"go.mongodb.org/mongo-driver/mongo"
 
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
@@ -111,10 +112,49 @@ func StructToAttributeValueMap(s any, modify ...func(key string, val any) any) (
 	return result, nil
 }
 
-func WriteResponse(c *gin.Context, code int, localCode cwsbase.LocalizationCode, data any, strs ...any) {
-	c.JSON(code, gin.H{
+func WriteResponse(c *gin.Context, statusCode int, localCode cwsbase.LocalizationCode, data any, localEmbeddingStrs ...any) {
+	c.JSON(statusCode, gin.H{
 		"code":    localCode,
-		"message": cwsbase.GetLocalizationMessage(localCode, strs...),
+		"message": cwsbase.GetLocalizationMessage(localCode, localEmbeddingStrs...),
 		"data":    data,
 	})
+}
+
+func WriteResponseWithMongoCursor[T any](c *gin.Context, statusCode int, localCode cwsbase.LocalizationCode, cursor *mongo.Cursor, localEmbeddingStrs ...any) error {
+	c.Writer.WriteHeader(statusCode)
+	c.Writer.Header().Set("Content-Type", "application/json; charset=utf-8")
+
+	header := `{
+		"code": "` + string(localCode) + `",
+		"message": "` + cwsbase.GetLocalizationMessage(localCode, localEmbeddingStrs...) + `",
+		"data": [`
+
+	bottom := `]}`
+
+	addComma := false
+	c.Writer.Write([]byte(header))
+	for cursor.Next(c) {
+		if addComma {
+			c.Writer.Write([]byte(","))
+		}
+
+		if cursor.Err() != nil {
+			return cursor.Err()
+		}
+		var t T
+		err := cursor.Decode(&t)
+		if err != nil {
+			return err
+		}
+		d, err := json.Marshal(t)
+		if err != nil {
+			return err
+		}
+
+		c.Writer.Write(d)
+		addComma = true
+	}
+	c.Writer.Write([]byte(bottom))
+	c.Writer.Flush()
+	return nil
 }
