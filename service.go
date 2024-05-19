@@ -158,3 +158,15 @@ func WriteResponseWithMongoCursor[T any](c *gin.Context, statusCode int, localCo
 	c.Writer.Flush()
 	return nil
 }
+
+func IsStringInSlice(val string, ss []string) bool {
+	if len(val) == 0 {
+		return false
+	}
+	for _, s := range ss {
+		if val == s {
+			return true
+		}
+	}
+	return false
+}
