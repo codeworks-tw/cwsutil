@@ -2,7 +2,7 @@
  * File: repoEs.go
  * Created Date: Tuesday, April 30th 2024, 8:17:31 pm
  *
- * Last Modified: Fri May 03 2024
+ * Last Modified: Sun May 19 2024
  * Modified By: Howard Ling-Hao Kung
  *
  * Copyright (c) 2024 - Present Codeworks TW Ltd.
@@ -15,6 +15,10 @@ import (
 )
 
 type LazyMongoUpdater primitive.D
+
+func (update LazyMongoUpdater) SetKey(key string, value any) LazyMongoUpdater {
+	return append(update, primitive.E{Key: "$set", Value: primitive.D{primitive.E{Key: key, Value: value}}})
+}
 
 func (update LazyMongoUpdater) Set(doc any) LazyMongoUpdater {
 	return append(update, primitive.E{Key: "$set", Value: doc})
