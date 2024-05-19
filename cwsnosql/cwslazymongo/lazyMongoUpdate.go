@@ -60,6 +60,10 @@ func Set(doc any) LazyMongoUpdater {
 	return LazyMongoUpdater{}.Set(doc)
 }
 
+func SetKey(key string, value any) LazyMongoUpdater {
+	return LazyMongoUpdater{}.SetKey(key, value)
+}
+
 func AddToSet(key string, values ...any) LazyMongoUpdater {
 	return LazyMongoUpdater{}.AddToSet(key, values...)
 }
