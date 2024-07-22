@@ -2,7 +2,7 @@
  * File: service.go
  * Created Date: Sunday, May 19th 2024, 2:02:39 pm
  *
- * Last Modified: Tue Jun 04 2024
+ * Last Modified: Mon Jul 22 2024
  * Modified By: hsky77
  *
  * Copyright (c) 2024 - Present Codeworks TW Ltd.
@@ -15,6 +15,7 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/codeworks-tw/cwsutil/cwsaws"
 	"github.com/codeworks-tw/cwsutil/cwsbase"
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -75,6 +76,15 @@ func HandleServiceErrors(c *gin.Context, err error) {
 			WriteResponse(c, e.StatusCode, e.LocalCode, nil, e.EmbeddingStrings...)
 		}
 		return
+	}
+
+	logGroup := cwsbase.GetEnv("CLOUDWATCHLOG_LOG_GROUP", "")
+	if logGroup != "" {
+		proxy := cwsaws.GetCloudWatchLogProxy(logGroup, c)
+		e := proxy.SendMessage(err.Error())
+		if e != nil {
+			log.Println(e)
+		}
 	}
 	panic(err)
 }

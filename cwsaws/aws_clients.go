@@ -2,7 +2,7 @@
  * File: aws_clients.go
  * Created Date: Thursday, April 11th 2024, 10:31:37 am
  *
- * Last Modified: Tue Jun 04 2024
+ * Last Modified: Mon Jul 22 2024
  * Modified By: hsky77
  *
  * Copyright (c) 2024 - Present Codeworks TW Ltd.
@@ -25,12 +25,13 @@ var lock sync.Mutex
 var clients map[ClientName]any = map[ClientName]any{}
 
 const (
-	ClientName_STS      ClientName = "STS"
-	ClientName_DynamoDB ClientName = "DynamoDB"
-	ClientName_SQS      ClientName = "SQS"
-	ClientName_SNS      ClientName = "SNS"
-	ClientName_S3       ClientName = "S3"
-	ClientName_SES      ClientName = "SES"
+	ClientName_STS        ClientName = "STS"
+	ClientName_DynamoDB   ClientName = "DynamoDB"
+	ClientName_SQS        ClientName = "SQS"
+	ClientName_SNS        ClientName = "SNS"
+	ClientName_S3         ClientName = "S3"
+	ClientName_SES        ClientName = "SES"
+	ClientName_CloudWatch ClientName = "CloudWatch"
 )
 
 func GetSingletonClient[T any](name ClientName, ctx context.Context, clientGenFn func(cfg aws.Config) T, optFns ...func(*config.LoadOptions) error) T {
