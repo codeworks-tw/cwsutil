@@ -9,7 +9,7 @@
 | DEBUG                   | bool   | "true"/"false"/"1"/"0"                      |
 | LOCALIZATION_LANGUAGE   | string | "en"/"zh_tw"/"zh_cn" (default: en)          |
 | S3CacheTTL              | int    | (default: 10)                               |
-| CLOUDWATCHLOG_LOG_GROUP | string | any name                                    |
+| CLOUDWATCHLOG_LOG_GROUP | string | any aws cloudwatch log group name           |
 
 * *S3CacheTTL*: S3 Object local cache time to live in minutes.
 
