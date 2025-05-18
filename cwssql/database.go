@@ -2,7 +2,6 @@ package cwssql
 
 import (
 	"encoding/json"
-	"sync"
 	"time"
 
 	"github.com/codeworks-tw/cwsutil/cwsbase"
@@ -11,42 +10,45 @@ import (
 	"gorm.io/gorm"
 )
 
-var db_instance *gorm.DB
-var once sync.Once
+var db_instance *gorm.DB = nil
 
 func NewPostgresDB(db_connection_string string) (*gorm.DB, error) {
 	var err error = nil
-	once.Do(func() {
+	if db_instance == nil {
 		db_instance, err = gorm.Open(postgres.Open(db_connection_string), &gorm.Config{})
 		if err != nil {
-			return
+			db_instance = nil
+			return nil, err
 		}
 		db, err := db_instance.DB()
 		if err != nil {
-			return
+			db_instance = nil
+			return nil, err
 		}
 		db.SetMaxIdleConns(10)
 		db.SetMaxOpenConns(100)
 		db.SetConnMaxLifetime(time.Hour)
-	})
+	}
 	return db_instance, err
 }
 
 func NewSQLiteDB(file_path string) (*gorm.DB, error) {
 	var err error = nil
-	once.Do(func() {
+	if db_instance == nil {
 		db_instance, err = gorm.Open(sqlite.Open(file_path), &gorm.Config{})
 		if err != nil {
-			return
+			db_instance = nil
+			return nil, err
 		}
 		db, err := db_instance.DB()
 		if err != nil {
-			return
+			db_instance = nil
+			return nil, err
 		}
 		db.SetMaxIdleConns(10)
 		db.SetMaxOpenConns(100)
 		db.SetConnMaxLifetime(time.Hour)
-	})
+	}
 	return db_instance, err
 }
 

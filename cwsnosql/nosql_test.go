@@ -8,7 +8,7 @@
  * Copyright (c) 2024 - Present Codeworks TW Ltd.
  */
 
-package cwsutil
+package cwsnosql
 
 import (
 	"context"
@@ -16,7 +16,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/codeworks-tw/cwsutil/cwsnosql"
 	"github.com/codeworks-tw/cwsutil/cwsnosql/cwslazymongo"
 )
 
@@ -36,7 +35,7 @@ var RepositoryNoSqlTest = cwslazymongo.LazyMongoRepository{
 	CollectionName: "testnosqllazy",
 }
 
-var RepositoryNoSqlTest2 = cwsnosql.MongoDBRepository[NoSqlTestItemKey]{
+var RepositoryNoSqlTest2 = MongoDBRepository[NoSqlTestItemKey]{
 	Url:            "mongodb://localhost:27017",
 	DbName:         "testnosql",
 	CollectionName: "testnosql",

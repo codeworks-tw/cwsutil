@@ -1,4 +1,4 @@
-package cwsutil
+package cwssql
 
 import (
 	"context"
@@ -6,62 +6,57 @@ import (
 	"testing"
 
 	_ "ariga.io/atlas-provider-gorm/gormschema"
-	"github.com/codeworks-tw/cwsutil/cwssql"
 )
 
 type Account struct {
-	cwssql.BaseIdModel
-	Account  string `gorm:"type:text;not null;uniqueIndex"`
+	Account  string `gorm:"type:text;primaryKey"`
 	Password string `gorm:"type:text;not null"`
 	Enable   bool   `gorm:"default:true"`
-	cwssql.BaseTimeModel
+	BaseTimeModel
 }
 
 type AccountRepository struct {
-	cwssql.Repository[Account]
+	Repository[Account]
 }
 
 func (r *AccountRepository) GetAccount(account string) (*Account, error) {
 	return r.Get(map[string]any{"Account": account})
 }
 
-func NewAccountRepository(context context.Context, session *cwssql.DBSession) AccountRepository {
+func NewAccountRepository(context context.Context, session *DBSession) AccountRepository {
 	return AccountRepository{
-		Repository: cwssql.NewRepository[Account](context, session),
+		Repository: NewRepository[Account](context, session),
 	}
 }
 
 func TestSqlRepository(t *testing.T) {
-	db, err := cwssql.NewSQLiteDB("database.db")
+	db, err := NewSQLiteDB("data.db")
+	if err != nil {
+		panic(err)
+	}
+
+	err = db.AutoMigrate(&Account{})
 	if err != nil {
 		panic(err)
 	}
 
 	ctx := context.Background()
-	repo := NewAccountRepository(ctx, cwssql.NewSession(db))
+	repo := NewAccountRepository(ctx, NewSession(db))
 	err = repo.Begin()
 	if err != nil {
 		panic(err)
 	}
 
-	account, err := repo.GetAccount("test@xxx.com")
-	if err != nil {
-		panic(err)
-	}
-	log.Printf("Retrieved account: %+v", account)
-
-	if account == nil {
-		account = &Account{
-			Password: "XXXX",
-			Account:  "test@xxx.com",
-		}
+	account := &Account{
+		Password: "XXXX",
+		Account:  "test@xxx.com",
 	}
 
 	err = repo.Upsert(account)
 	if err != nil {
 		panic(err)
 	}
-	log.Println("Upsert account", account.Id)
+	log.Println("Upsert account", account.Account)
 
 	account.Account = "XXXXXXXXXXXX"
 	repo.Refresh(account)
