@@ -21,7 +21,7 @@ import (
 func TestUtil(t *testing.T) {
 	fmt.Println("\n================ Testing functions ================")
 
-	cwsbase.InitBasicLocalizationData()
+	InitBasicLocalizationData()
 	fmt.Println("Test Location Message 200: ", cwsbase.GetLocalizationMessage("200"))
 
 	fmt.Println("\nTest general encryption...")

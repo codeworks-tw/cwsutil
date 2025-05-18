@@ -46,9 +46,6 @@ func (r *Repository[T]) Get(equals map[string]any) (*T, error) {
 	var entity T
 	result := r.session.GetDb().WithContext(r.context).Where(mapToStruct[T](equals)).First(&entity)
 	if result.Error != nil {
-		if result.Error == gorm.ErrRecordNotFound {
-			return nil, nil
-		}
 		return nil, result.Error
 	}
 	return &entity, result.Error

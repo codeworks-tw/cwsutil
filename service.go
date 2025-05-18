@@ -19,6 +19,7 @@ import (
 	"github.com/codeworks-tw/cwsutil/cwsbase"
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/mongo"
+	"gorm.io/gorm"
 
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
@@ -47,9 +48,21 @@ func ParseBody(c *gin.Context, data any) error {
 	err := c.ShouldBind(data)
 	if err != nil {
 		if cwsbase.GetEnvironmentInfo().DebugMode {
-			return CWSError{StatusCode: http.StatusBadRequest, LocalCode: cwsbase.LocalCode_BadRequest, ActualError: err}
+			return CWSError{StatusCode: http.StatusBadRequest, LocalCode: LocalCode_BadRequest, ActualError: err}
 		} else {
-			return CWSError{StatusCode: http.StatusBadRequest, LocalCode: cwsbase.LocalCode_BadRequest, ActualError: nil}
+			return CWSError{StatusCode: http.StatusBadRequest, LocalCode: LocalCode_BadRequest, ActualError: nil}
+		}
+	}
+	return nil
+}
+
+func ParseQuery(c *gin.Context, data any) error {
+	err := c.ShouldBindQuery(data)
+	if err != nil {
+		if cwsbase.GetEnvironmentInfo().DebugMode {
+			return CWSError{StatusCode: http.StatusBadRequest, LocalCode: LocalCode_BadRequest, ActualError: err}
+		} else {
+			return CWSError{StatusCode: http.StatusBadRequest, LocalCode: LocalCode_BadRequest, ActualError: nil}
 		}
 	}
 	return nil
@@ -65,6 +78,7 @@ func WrapHandler(fn func(ctx *gin.Context) error) gin.HandlerFunc {
 }
 
 func HandleServiceErrors(c *gin.Context, err error) {
+	err = convertGORMErrors(err)
 	if e, ok := err.(CWSError); ok {
 		if cwsbase.GetEnvironmentInfo().DebugMode {
 			log.Println(e)
@@ -86,6 +100,8 @@ func HandleServiceErrors(c *gin.Context, err error) {
 			log.Println(e)
 		}
 	}
+
+	WriteResponse(c, http.StatusInternalServerError, LocalCode_InternalServerError, err.Error())
 	panic(err)
 }
 
@@ -179,4 +195,15 @@ func IsStringInSlice(val string, ss []string) bool {
 		}
 	}
 	return false
+}
+
+func convertGORMErrors(err error) error {
+	switch err {
+	case gorm.ErrRecordNotFound:
+		return CWSError{
+			StatusCode: http.StatusNotFound,
+			LocalCode:  LocalCode_NotFound,
+		}
+	}
+	return err
 }
