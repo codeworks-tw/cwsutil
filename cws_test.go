@@ -44,5 +44,12 @@ func TestUtil(t *testing.T) {
 	}
 	fmt.Println("After decryption: ", d)
 
+	stack := cwsbase.Stack[string]{}
+	s1 := "Hello"
+	s2 := "World"
+	stack.Push(&s1)
+	stack.Push(&s2)
+	fmt.Println("Stack:", *stack.Pop(), *stack.Peek())
+
 	fmt.Println("================ Testing functions end ================")
 }
