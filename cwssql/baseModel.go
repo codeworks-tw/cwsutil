@@ -11,6 +11,10 @@ type BaseIdModel struct {
 	Id string `gorm:"type:text;primaryKey;default:uuid_generate_v4()"`
 }
 
+type NewBaseIdModel struct {
+	Id string `gorm:"type:text;primaryKey;default:gen_random_uuid()"`
+}
+
 type BaseTimeModel struct {
 	CreatedAt time.Time
 	UpdatedAt time.Time
