@@ -1,18 +1,9 @@
 package cwssql
 
-import (
-	"regexp"
-	"strings"
-)
-
 type WhereCaluse map[string][]any
 
-var re *regexp.Regexp = regexp.MustCompile("(.)([A-Z])")
-
-// var s string = "HelloWorldMyNameIsCarl".replaceAll("(.)(\\p{Lu})", "$1_$2")
-
 func (w WhereCaluse) Eq(key string, value any) WhereCaluse {
-	w[strings.ToLower(re.ReplaceAllString(key, "$1_$2"))+" = ?"] = []any{value}
+	w[key+" = ?"] = []any{value}
 	return w
 }
 
