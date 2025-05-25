@@ -4,8 +4,10 @@ import (
 	"context"
 	"log"
 	"testing"
+	"time"
 
 	_ "ariga.io/atlas-provider-gorm/gormschema"
+	"gorm.io/gorm"
 )
 
 type Account struct {
@@ -15,18 +17,18 @@ type Account struct {
 	BaseTimeModel
 }
 
-type AccountRepository struct {
-	Repository[Account]
-}
+type AccountRepository Repository[Account]
 
 func (r *AccountRepository) GetAccount(account string) (*Account, error) {
-	return r.Get(map[string]any{"Account": account})
+	return r.Get(Eq("Account", account))
+}
+
+func (r *AccountRepository) GetAccounts(account string) ([]*Account, error) {
+	return r.GetAll(Eq("Account", account))
 }
 
 func NewAccountRepository(context context.Context, session *DBSession) AccountRepository {
-	return AccountRepository{
-		Repository: NewRepository[Account](context, session),
-	}
+	return AccountRepository(NewRepository[Account](context, session))
 }
 
 func TestSqlRepository(t *testing.T) {
@@ -52,13 +54,33 @@ func TestSqlRepository(t *testing.T) {
 		Account:  "test@xxx.com",
 	}
 
+	account2 := &Account{
+		Password: "XXXX",
+		Account:  "test2@xxx.com",
+	}
+
 	err = repo.Upsert(account)
 	if err != nil {
 		panic(err)
 	}
 	log.Println("Upsert account", account.Account)
 
-	account.Account = "XXXXXXXXXXXX"
+	err = repo.Upsert(account2)
+	if err != nil {
+		panic(err)
+	}
+	log.Println("Upsert account", account2.Account)
+
+	account.Enable = true
+	repo.Refresh(account)
+
+	account.Enable = true
+	err = repo.Upsert(account)
+	if err != nil {
+		panic(err)
+	}
+	log.Println("Upsert account", account.Enable)
+
 	repo.Refresh(account)
 
 	account, err = repo.GetAccount("test@xxx.com")
@@ -67,7 +89,45 @@ func TestSqlRepository(t *testing.T) {
 	}
 	log.Printf("Retrieved account: %+v", account)
 
-	accounts, err := repo.GetAll(map[string]any{"Account": "test@xxx.com"})
+	account, err = repo.GetAccount("")
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			log.Println("Account not found")
+		} else {
+			panic(err)
+		}
+	}
+	log.Printf("Retrieved account: %+v", account)
+
+	accounts, err := repo.GetAccounts("")
+	if err != nil {
+		log.Printf("Error getting all accounts: %v", err)
+		return
+	}
+	log.Printf("All account: %+v", accounts)
+
+	accounts, err = repo.GetAll(And(Eq("Enable", false).Eq("Account", "test2@xxx.com"), Eq("Account", "test@xxx.com").Eq("Enable", false)))
+	if err != nil {
+		log.Printf("Error getting all accounts: %v", err)
+		return
+	}
+	log.Printf("All account: %+v", accounts)
+
+	accounts, err = repo.GetAll(Or(Eq("Enable", false).Eq("Account", "test2@xxx.com"), Eq("Account", "test@xxx.com").Eq("Enable", false)))
+	if err != nil {
+		log.Printf("Error getting all accounts: %v", err)
+		return
+	}
+	log.Printf("All account: %+v", accounts)
+
+	accounts, err = repo.GetAll(Between("Created_At", time.Now().Add(-time.Hour), time.Now()))
+	if err != nil {
+		log.Printf("Error getting all accounts: %v", err)
+		return
+	}
+	log.Printf("All account: %+v", accounts)
+
+	accounts, err = repo.GetAll(Ne("Enable", true))
 	if err != nil {
 		log.Printf("Error getting all accounts: %v", err)
 		return
@@ -80,13 +140,7 @@ func TestSqlRepository(t *testing.T) {
 		return
 	}
 
-	err = repo.Delete(account)
-	if err != nil {
-		log.Printf("Error deleting account: %v", err)
-		return
-	}
-
-	accounts, err = repo.DeleteAll(map[string]any{"Account": "test@xxx.com"})
+	accounts, err = repo.DeleteAll(Lte("created_at", time.Now()))
 	if err != nil {
 		log.Printf("Error deleting all accounts: %v", err)
 		return

@@ -94,7 +94,7 @@ func NewSession(db *gorm.DB) *DBSession {
 	return &DBSession{db: db}
 }
 
-func GetPrimaryKeyValueMap(db *gorm.DB, model any) (map[string]any, error) {
+func GetPrimaryKeyValueMap(db *gorm.DB, model any) (WhereCaluse, error) {
 	stmt := &gorm.Statement{DB: db}
 	if err := stmt.Parse(model); err != nil {
 		return nil, err
@@ -103,11 +103,11 @@ func GetPrimaryKeyValueMap(db *gorm.DB, model any) (map[string]any, error) {
 	var inInterface map[string]any
 	inrec, _ := json.Marshal(model)
 	json.Unmarshal(inrec, &inInterface)
-	result := map[string]any{}
+	var wc WhereCaluse
 	for _, field := range stmt.Schema.Fields {
 		if field.TagSettings["PRIMARYKEY"] == "PRIMARYKEY" {
-			result[field.Name] = inInterface[field.Name]
+			wc = Eq(field.Name, inInterface[field.Name])
 		}
 	}
-	return result, nil
+	return wc, nil
 }
