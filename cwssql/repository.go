@@ -12,13 +12,13 @@ import (
 type IRepository[T any] interface {
 	GetSession() *DBSession                             // Get the gorm db session
 	GetContext() context.Context                        // Get the context
-	GetAll(whereClause ...WhereCaluse) ([]*T, error)    // Get entities. Note: GetAll(WhereCaluse) equals Select all records.
+	GetAll(whereClause ...WhereCaluse) ([]*T, error)    // Get entities. Note: GetAll() equals Select all records.
 	Get(whereClause ...WhereCaluse) (*T, error)         // Get entity
 	Upsert(entity *T) error                             // Create or Replace
 	Delete(entity *T) error                             // Delete entity
 	DeleteAll(whereClause ...WhereCaluse) ([]*T, error) // Delete entities
 	Refresh(entity *T) error                            // Refresh entity
-	Count(whereClause ...WhereCaluse) (int64, error)    // Count entities. Note: GetAll(WhereCaluse{}) equals Select all records.
+	Count(whereClause ...WhereCaluse) (int64, error)    // Count entities.
 	Begin() error                                       // Start a transaction
 	Rollback() error                                    // Rollback a transiction
 	Commit() error                                      // Commit a transiction

@@ -120,7 +120,7 @@ func TestSqlRepository(t *testing.T) {
 	}
 	log.Printf("All account: %+v", accounts)
 
-	accounts, err = repo.GetAll(Between("Created_At", time.Now().Add(-time.Hour), time.Now()))
+	accounts, err = repo.GetAll(Between("CreatedAt", time.Now().Add(-time.Hour), time.Now()))
 	if err != nil {
 		log.Printf("Error getting all accounts: %v", err)
 		return
@@ -140,7 +140,7 @@ func TestSqlRepository(t *testing.T) {
 		return
 	}
 
-	accounts, err = repo.DeleteAll(Lte("created_at", time.Now()))
+	accounts, err = repo.DeleteAll(Lte("CreatedAt", time.Now()))
 	if err != nil {
 		log.Printf("Error deleting all accounts: %v", err)
 		return

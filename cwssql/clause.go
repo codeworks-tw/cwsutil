@@ -1,54 +1,56 @@
 package cwssql
 
+import "github.com/codeworks-tw/cwsutil/cwsbase"
+
 type WhereCaluse map[string][]any
 
 func (w WhereCaluse) Eq(key string, value any) WhereCaluse {
-	w[key+" = ?"] = []any{value}
+	w[cwsbase.ToSnakeCase(key)+" = ?"] = []any{value}
 	return w
 }
 
 func (w WhereCaluse) Ne(key string, value any) WhereCaluse {
-	w[key+" != ?"] = []any{value}
+	w[cwsbase.ToSnakeCase(key)+" != ?"] = []any{value}
 	return w
 }
 
 func (w WhereCaluse) Gt(key string, value any) WhereCaluse {
-	w[key+" > ?"] = []any{value}
+	w[cwsbase.ToSnakeCase(key)+" > ?"] = []any{value}
 	return w
 }
 
 func (w WhereCaluse) Gte(key string, value any) WhereCaluse {
-	w[key+" >= ?"] = []any{value}
+	w[cwsbase.ToSnakeCase(key)+" >= ?"] = []any{value}
 	return w
 }
 
 func (w WhereCaluse) Lt(key string, value any) WhereCaluse {
-	w[key+" < ?"] = []any{value}
+	w[cwsbase.ToSnakeCase(key)+" < ?"] = []any{value}
 	return w
 }
 
 func (w WhereCaluse) Lte(key string, value any) WhereCaluse {
-	w[key+" <= ?"] = []any{value}
+	w[cwsbase.ToSnakeCase(key)+" <= ?"] = []any{value}
 	return w
 }
 
 func (w WhereCaluse) In(key string, values ...any) WhereCaluse {
-	w[key+" IN (?)"] = values
+	w[cwsbase.ToSnakeCase(key)+" IN (?)"] = values
 	return w
 }
 
 func (w WhereCaluse) Nin(key string, values ...any) WhereCaluse {
-	w[key+" NOT IN (?)"] = values
+	w[cwsbase.ToSnakeCase(key)+" NOT IN (?)"] = values
 	return w
 }
 
 func (w WhereCaluse) Like(key string, value any) WhereCaluse {
-	w[key+" LIKE ?"] = []any{value}
+	w[cwsbase.ToSnakeCase(key)+" LIKE ?"] = []any{value}
 	return w
 }
 
 func (w WhereCaluse) Between(key string, left any, right any) WhereCaluse {
-	w[key+" BETWEEN ? AND ?"] = []any{left, right}
+	w[cwsbase.ToSnakeCase(key)+" BETWEEN ? AND ?"] = []any{left, right}
 	return w
 }
 func (w WhereCaluse) And(clauses ...WhereCaluse) WhereCaluse {
