@@ -1,6 +1,6 @@
 # Environment Variables:
 
-| Variable                | module  |        | Type                                        | Value |
+| Variable                | module  |        | Type                                        |
 | ----------------------- | ------- | ------ | ------------------------------------------- |
 | CRYPTO_KEY_HEX          | cwsbase | string | try "openssl rand -hex 32" to generate keys |
 | CRYPTO_IV_HEX           | cwsbase | string | try "openssl rand -hex 16" to generate keys |
