@@ -32,12 +32,45 @@ type CWSError struct {
 	ActualError      error
 }
 
+type CWSLocalizedResponse struct {
+	StatusCode       int
+	LocalCode        cwsbase.LocalizationCode
+	EmbeddingStrings []any
+	ActualError      error
+}
+
 func (e CWSError) Error() string {
-	r := cwsbase.GetLocalizationMessage(e.LocalCode, e.EmbeddingStrings...)
+	s := cwsbase.GetLocalizationMessage(e.LocalCode, e.EmbeddingStrings...)
 	if e.ActualError != nil {
-		r += " ActualError: " + e.ActualError.Error()
+		s += " ActualError: " + e.ActualError.Error()
 	}
-	return r
+	return s
+}
+
+func (r CWSLocalizedResponse) Error() string {
+	s := cwsbase.GetLocalizationMessage(r.LocalCode, r.EmbeddingStrings...)
+	if r.ActualError != nil {
+		s += " ActualError: " + r.ActualError.Error()
+	}
+	return s
+}
+
+func (e *CWSLocalizedResponse) EmbedValues(values ...any) CWSLocalizedResponse {
+	return CWSLocalizedResponse{
+		StatusCode:       e.StatusCode,
+		LocalCode:        e.LocalCode,
+		EmbeddingStrings: values,
+		ActualError:      e.ActualError,
+	}
+}
+
+func (e *CWSLocalizedResponse) EmbedActualError(err error) CWSLocalizedResponse {
+	return CWSLocalizedResponse{
+		StatusCode:       e.StatusCode,
+		LocalCode:        e.LocalCode,
+		EmbeddingStrings: e.EmbeddingStrings,
+		ActualError:      err,
+	}
 }
 
 func SetLocalizationData(jsonString string) {
@@ -48,9 +81,9 @@ func ParseBody(c *gin.Context, data any) error {
 	err := c.ShouldBind(data)
 	if err != nil {
 		if cwsbase.GetEnvironmentInfo().DebugMode {
-			return CWSError{StatusCode: http.StatusBadRequest, LocalCode: LocalCode_BadRequest, ActualError: err}
+			return CWSResponseBadRequest.EmbedActualError(err)
 		} else {
-			return CWSError{StatusCode: http.StatusBadRequest, LocalCode: LocalCode_BadRequest, ActualError: nil}
+			return CWSResponseBadRequest
 		}
 	}
 	return nil
@@ -60,9 +93,9 @@ func ParseQuery(c *gin.Context, data any) error {
 	err := c.ShouldBindQuery(data)
 	if err != nil {
 		if cwsbase.GetEnvironmentInfo().DebugMode {
-			return CWSError{StatusCode: http.StatusBadRequest, LocalCode: LocalCode_BadRequest, ActualError: err}
+			return CWSResponseBadRequest.EmbedActualError(err)
 		} else {
-			return CWSError{StatusCode: http.StatusBadRequest, LocalCode: LocalCode_BadRequest, ActualError: nil}
+			return CWSResponseBadRequest
 		}
 	}
 	return nil
@@ -79,7 +112,7 @@ func WrapHandler(fn func(ctx *gin.Context) error) gin.HandlerFunc {
 
 func HandleServiceErrors(c *gin.Context, err error) {
 	err = convertGORMErrors(err)
-	if e, ok := err.(CWSError); ok {
+	if e, ok := err.(CWSLocalizedResponse); ok {
 		if cwsbase.GetEnvironmentInfo().DebugMode {
 			log.Println(e)
 		}
@@ -200,10 +233,7 @@ func IsStringInSlice(val string, ss []string) bool {
 func convertGORMErrors(err error) error {
 	switch err {
 	case gorm.ErrRecordNotFound:
-		return CWSError{
-			StatusCode: http.StatusNotFound,
-			LocalCode:  LocalCode_NotFound,
-		}
+		return CWSResponseNotFound
 	}
 	return err
 }

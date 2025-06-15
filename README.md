@@ -14,8 +14,9 @@
 * *S3CacheTTL*: S3 Object local cache time to live in minutes.
 
 # Release
-* 0.1.0 - Apr. 11, 2024
+* 0.3.6 - Jun. 15, 2025
 * 0.3.5 - May. 25, 2025
+* 0.1.0 - Apr. 11, 2024
 
 # 使用方法
 
@@ -40,9 +41,14 @@ const LocalizationData string = `{
 }`
 
 cwsbase.UpdateLocalizationData([]byte(LocalizationData))  // 更新 cwsbase 多語系目錄
+
+var DataNotFoundError = cwsutil.CWSLocalizedResponse{ // 定義找不到資料的 Error Response
+	StatusCode: http.StatusNotFound,
+	LocalCode:  LocalCode_DataNotFound,
+}
 ```
 
-2. 使用 cwsutil.WrapHandler 包裝 api handler 來統一 Handle Custom Error cwsutil.CWSError，以達到統一的錯誤 response body，如以下範例:
+2. 使用 cwsutil.WrapHandler 包裝 api handler 來統一 Handle Custom Localized Response cwsutil.CWSLocalizedResponse，以達到統一的 response body format，如以下範例:
   
 ```go
 var CHandlerGetData gin.HandlerFunc = cwsutil.WrapHandler(func(ctx *gin.Context) error {
@@ -52,12 +58,7 @@ var CHandlerGetData gin.HandlerFunc = cwsutil.WrapHandler(func(ctx *gin.Context)
 
     // 處理找不到 id = "1" 的 data
     if err == mongo.ErrNoDocuments {
-        return cwsutil.CWSError{
-            StatusCode: http.StatusNotFound,
-            LocalCode:  LocalCode_DataNotFound,
-            EmbeddingStrings: []string{id},
-            ActualError: err  // 通常情況不指定此參數，必要時可以使用此參數在 data 欄位回傳真正的錯誤 message
-        }
+        return DataNotFoundError.EmbedValues(id).EmbedActualError(err)
     } else { // 處理其他錯誤
         return err  // 回傳 500 Internal Server Error 並記錄 Error Log
     }
@@ -67,7 +68,7 @@ var CHandlerGetData gin.HandlerFunc = cwsutil.WrapHandler(func(ctx *gin.Context)
 })
 ```
 
-   * 有指定 ActualError 的情況， response body 如下:
+   * 有 EmbedActualError 的情況， response body 如下:
 
 ```json
     // http status: 404 Not Found
@@ -78,7 +79,7 @@ var CHandlerGetData gin.HandlerFunc = cwsutil.WrapHandler(func(ctx *gin.Context)
     }
 ```
 
-   * ActualError 為 nil 的情況，response body 如下:
+   * 無 EmbedActualError 的情況，response body 如下:
 
 ```json
     // http status: 404 Not Found

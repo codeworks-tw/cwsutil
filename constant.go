@@ -1,6 +1,10 @@
 package cwsutil
 
-import "github.com/codeworks-tw/cwsutil/cwsbase"
+import (
+	"net/http"
+
+	"github.com/codeworks-tw/cwsutil/cwsbase"
+)
 
 const (
 	LocalCode_InternalServerError cwsbase.LocalizationCode = "500"
@@ -40,4 +44,19 @@ var localdata string = `{
 
 func InitBasicLocalizationData() {
 	cwsbase.UpdateLocalizationData([]byte(localdata))
+}
+
+var CWSResponseInternalServerError = CWSLocalizedResponse{
+	StatusCode: http.StatusInternalServerError,
+	LocalCode:  LocalCode_InternalServerError,
+}
+
+var CWSResponseBadRequest = CWSLocalizedResponse{
+	StatusCode: http.StatusBadRequest,
+	LocalCode:  LocalCode_BadRequest,
+}
+
+var CWSResponseNotFound = CWSLocalizedResponse{
+	StatusCode: http.StatusNotFound,
+	LocalCode:  LocalCode_NotFound,
 }
