@@ -14,9 +14,6 @@ import (
 	"context"
 	"reflect"
 
-	"github.com/codeworks-tw/cwsutil/cwsaws"
-	"github.com/codeworks-tw/cwsutil/cwsbase"
-
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/credentials"
@@ -24,6 +21,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/expression"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
+	"github.com/codeworks-tw/cwsutil/cwsbase"
 )
 
 type IRepository[PKey any] interface {
@@ -31,7 +29,7 @@ type IRepository[PKey any] interface {
 	Query(ctx context.Context, indexName string, expr expression.Expression) ([]*map[string]any, error)
 	Merge(ctx context.Context, pKey PKey, expr expression.Expression) (*map[string]any, error)
 	Delete(ctx context.Context, pKey PKey) (*map[string]any, error)
-	GetDynamoDBTableProxy(ctx context.Context) *cwsaws.DynamoDBTableProxy[map[string]any]
+	GetDynamoDBTableProxy(ctx context.Context) *DynamoDBTableProxy[map[string]any]
 	GetPKeyKeys() []string
 }
 
@@ -51,7 +49,7 @@ func (r *Repository[PKey]) GetPKeyKeys() []string {
 	return keys
 }
 
-func (r *Repository[PKey]) GetDynamoDBTableProxy(ctx context.Context) cwsaws.DynamoDBTableProxy[map[string]any] {
+func (r *Repository[PKey]) GetDynamoDBTableProxy(ctx context.Context) DynamoDBTableProxy[map[string]any] {
 	if cwsbase.GetEnvironmentInfo().IsLocal {
 		credential := config.WithCredentialsProvider(credentials.NewStaticCredentialsProvider(
 			cwsbase.GetEnv[string]("Local_DynamoDB_AWS_ID"),
@@ -64,9 +62,9 @@ func (r *Repository[PKey]) GetDynamoDBTableProxy(ctx context.Context) cwsaws.Dyn
 				}, nil
 			}))
 
-		return cwsaws.GetDynamoDBTableProxy[map[string]any](r.TableName, ctx, credential, endPoint)
+		return GetDynamoDBTableProxy[map[string]any](r.TableName, ctx, credential, endPoint)
 	}
-	return cwsaws.GetDynamoDBTableProxy[map[string]any](r.TableName, ctx)
+	return GetDynamoDBTableProxy[map[string]any](r.TableName, ctx)
 }
 
 func (r *Repository[PKey]) Get(ctx context.Context, pKey PKey, columns ...string) (*map[string]any, error) {

@@ -1,4 +1,4 @@
-module cwsaws
+module github.com/codeworks-tw/cwsutil/cwsaws
 
 go 1.24.2
 
@@ -16,7 +16,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/sns v1.38.3
 	github.com/aws/aws-sdk-go-v2/service/sqs v1.42.5
 	github.com/aws/aws-sdk-go-v2/service/sts v1.38.4
-	github.com/codeworks-tw/cwsutil v0.3.6
+	github.com/codeworks-tw/cwsutil v0.3.7
 )
 
 require (
@@ -35,4 +35,5 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/sso v1.29.3 // indirect
 	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.34.4 // indirect
 	github.com/aws/smithy-go v1.23.0 // indirect
+	github.com/stretchr/testify v1.8.3 // indirect
 )
