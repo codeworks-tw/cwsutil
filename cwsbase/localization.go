@@ -16,18 +16,27 @@ import (
 	"sync"
 )
 
+// LocalizationCode represents a unique identifier for localized messages
 type LocalizationCode string
+// LocalizationLanguage represents a language identifier for localization
 type LocalizationLanguage string
 
+// Supported localization languages
 const (
+	// English language identifier
 	English   LocalizationLanguage = "en"
+	// Taiwanese Traditional Chinese language identifier
 	Taiwanese LocalizationLanguage = "zh_tw"
+	// Simplified Chinese language identifier
 	Chinese   LocalizationLanguage = "zh_cn"
 )
 
 var localInitLock sync.Mutex
 var localmap map[LocalizationLanguage]map[LocalizationCode]string = map[LocalizationLanguage]map[LocalizationCode]string{}
 
+// UpdateLocalizationData updates the global localization map with new data from JSON
+// This function is thread-safe and merges new data with existing localization data
+// The JSON structure should be: {"language": {"code": "message"}}
 func UpdateLocalizationData(jsonData []byte) error {
 	localInitLock.Lock()
 	defer localInitLock.Unlock()
@@ -49,6 +58,9 @@ func UpdateLocalizationData(jsonData []byte) error {
 	return nil
 }
 
+// GetLocalizationMessage retrieves a localized message by code and language
+// The language is determined by the LOCALIZATION_LANGUAGE environment variable (defaults to "en")
+// If additional string parameters are provided, they are formatted into the message using sprintf
 func GetLocalizationMessage(code LocalizationCode, strs ...any) string {
 	lang := GetEnv("LOCALIZATION_LANGUAGE", "en")
 

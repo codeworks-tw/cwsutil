@@ -53,6 +53,17 @@ func (w WhereCaluse) Between(key string, left any, right any) WhereCaluse {
 	w[cwsbase.ToSnakeCase(key)+" BETWEEN ? AND ?"] = []any{left, right}
 	return w
 }
+
+func (w WhereCaluse) IsNull(key string) WhereCaluse {
+	w[cwsbase.ToSnakeCase(key)+" IS NULL"] = []any{}
+	return w
+}
+
+func (w WhereCaluse) IsNotNull(key string) WhereCaluse {
+	w[cwsbase.ToSnakeCase(key)+" IS NOT NULL"] = []any{}
+	return w
+}
+
 func (w WhereCaluse) And(clauses ...WhereCaluse) WhereCaluse {
 	query := ""
 	vs := []any{}
@@ -93,7 +104,7 @@ func (w WhereCaluse) Or(clauses ...WhereCaluse) WhereCaluse {
 				vs = append(vs, v...)
 			}
 			if wi < len(wc)-1 {
-				query += " AND "
+				query += " OR "
 			}
 			wi++
 		}
@@ -141,6 +152,14 @@ func Like(key string, value any) WhereCaluse {
 
 func Between(key string, left any, right any) WhereCaluse {
 	return WhereCaluse{}.Between(key, left, right)
+}
+
+func IsNull(key string) WhereCaluse {
+	return WhereCaluse{}.IsNull(key)
+}
+
+func IsNotNull(key string) WhereCaluse {
+	return WhereCaluse{}.IsNotNull(key)
 }
 
 func And(clauses ...WhereCaluse) WhereCaluse {

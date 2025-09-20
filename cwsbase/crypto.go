@@ -20,6 +20,8 @@ import (
 	"errors"
 )
 
+// EncryptMap encrypts a map[string]any into a base64 encoded string using AES-CBC with PKCS5 padding
+// The encryption uses keys from environment variables CRYPTO_KEY_HEX and CRYPTO_IV_HEX
 func EncryptMap(input map[string]any) (string, error) {
 	data, err := json.Marshal(input)
 	if err != nil {
@@ -29,6 +31,8 @@ func EncryptMap(input map[string]any) (string, error) {
 	return aESCBCPKCS5PaddingEncrypt(data, aes.BlockSize)
 }
 
+// DecryptToMap decrypts a base64 encoded string back to a map[string]any using AES-CBC with PKCS5 padding
+// The decryption uses keys from environment variables CRYPTO_KEY_HEX and CRYPTO_IV_HEX
 func DecryptToMap(input string) (map[string]any, error) {
 	data, err := aESCBCPKCS5PaddingDecrypt(input)
 	if err != nil {
@@ -43,6 +47,8 @@ func DecryptToMap(input string) (map[string]any, error) {
 	return output, nil
 }
 
+// aESCBCPKCS5PaddingEncrypt performs AES-CBC encryption with PKCS5 padding
+// Returns base64 URL-encoded ciphertext
 func aESCBCPKCS5PaddingEncrypt(plaintext []byte, blockSize int) (string, error) {
 	key, err := hex.DecodeString(GetEnv[string]("CRYPTO_KEY_HEX"))
 	if err != nil {
@@ -66,6 +72,8 @@ func aESCBCPKCS5PaddingEncrypt(plaintext []byte, blockSize int) (string, error) 
 	return base64.URLEncoding.EncodeToString(ciphertext), nil
 }
 
+// aESCBCPKCS5PaddingDecrypt performs AES-CBC decryption with PKCS5 padding removal
+// Accepts base64 URL-encoded ciphertext
 func aESCBCPKCS5PaddingDecrypt(cipherTextBase64 string) ([]byte, error) {
 	key, err := hex.DecodeString(GetEnv[string]("CRYPTO_KEY_HEX"))
 	if err != nil {
@@ -97,12 +105,14 @@ func aESCBCPKCS5PaddingDecrypt(cipherTextBase64 string) ([]byte, error) {
 	return cipherTextDecoded, nil
 }
 
+// pKCS5Padding adds PKCS5 padding to the input data
 func pKCS5Padding(ciphertext []byte, blockSize int) []byte {
 	padding := (blockSize - len(ciphertext)%blockSize)
 	padtext := bytes.Repeat([]byte{byte(padding)}, padding)
 	return append(ciphertext, padtext...)
 }
 
+// pKCS5Unpadding removes PKCS5 padding from the input data
 func pKCS5Unpadding(src []byte, blockSize int) ([]byte, error) {
 	srcLen := len(src)
 	paddingLen := int(src[srcLen-1])

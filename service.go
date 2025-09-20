@@ -15,162 +15,65 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/codeworks-tw/cwsutil/cwsaws"
 	"github.com/codeworks-tw/cwsutil/cwsbase"
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/mongo"
 	"gorm.io/gorm"
-
-	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
-	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 )
 
-type CWSError struct {
-	StatusCode       int
-	LocalCode        cwsbase.LocalizationCode
-	EmbeddingStrings []any
-	ActualError      error
-}
-
-type CWSLocalizedResponse struct {
-	StatusCode       int
-	LocalCode        cwsbase.LocalizationCode
-	EmbeddingStrings []any
-	ActualError      error
-}
-
-func (e CWSError) Error() string {
-	s := cwsbase.GetLocalizationMessage(e.LocalCode, e.EmbeddingStrings...)
-	if e.ActualError != nil {
-		s += " ActualError: " + e.ActualError.Error()
-	}
-	return s
-}
-
-func (r CWSLocalizedResponse) Error() string {
-	s := cwsbase.GetLocalizationMessage(r.LocalCode, r.EmbeddingStrings...)
-	if r.ActualError != nil {
-		s += " ActualError: " + r.ActualError.Error()
-	}
-	return s
-}
-
-func (e *CWSLocalizedResponse) EmbedValues(values ...any) CWSLocalizedResponse {
-	return CWSLocalizedResponse{
-		StatusCode:       e.StatusCode,
-		LocalCode:        e.LocalCode,
-		EmbeddingStrings: values,
-		ActualError:      e.ActualError,
-	}
-}
-
-func (e *CWSLocalizedResponse) EmbedActualError(err error) CWSLocalizedResponse {
-	return CWSLocalizedResponse{
-		StatusCode:       e.StatusCode,
-		LocalCode:        e.LocalCode,
-		EmbeddingStrings: e.EmbeddingStrings,
-		ActualError:      err,
-	}
-}
-
+// SetLocalizationData updates the localization data with custom JSON string
+// This allows applications to provide their own localized messages
 func SetLocalizationData(jsonString string) {
 	cwsbase.UpdateLocalizationData([]byte(jsonString))
 }
 
+// ParseBody parses the HTTP request body into the provided data structure using Gin's ShouldBind
+// Returns a CWSLocalizedErrorResponse error with 400 Bad Request status if parsing fails
 func ParseBody(c *gin.Context, data any) error {
 	err := c.ShouldBind(data)
 	if err != nil {
-		if cwsbase.GetEnvironmentInfo().DebugMode {
-			return CWSResponseBadRequest.EmbedActualError(err)
-		} else {
-			return CWSResponseBadRequest
-		}
+		return CWSBadRequestError.EmbedActualError(err)
 	}
 	return nil
 }
 
+// ParseQuery parses the HTTP query parameters into the provided data structure using Gin's ShouldBindQuery
+// Returns a CWSLocalizedErrorResponse error with 400 Bad Request status if parsing fails
 func ParseQuery(c *gin.Context, data any) error {
 	err := c.ShouldBindQuery(data)
 	if err != nil {
-		if cwsbase.GetEnvironmentInfo().DebugMode {
-			return CWSResponseBadRequest.EmbedActualError(err)
-		} else {
-			return CWSResponseBadRequest
-		}
+		return CWSBadRequestError.EmbedActualError(err)
 	}
 	return nil
 }
 
+// WrapHandler wraps a function that returns an error into a standard Gin handler
+// This provides unified error handling for all HTTP handlers in the application
 func WrapHandler(fn func(ctx *gin.Context) error) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		err := fn(ctx)
 		if err != nil {
-			HandleServiceErrors(ctx, err)
+			err = convertDataBaseErrors(err)
+			if e, ok := err.(CWSLocalizedErrorResponse); ok {
+				if cwsbase.GetEnvironmentInfo().DebugMode {
+					log.Println(e)
+				}
+
+				if e.actualError != nil {
+					WriteResponse(ctx, e.StatusCode, e.LocalCode, e.actualError.Error(), e.embedValues...)
+				} else {
+					WriteResponse(ctx, e.StatusCode, e.LocalCode, nil, e.embedValues...)
+				}
+				return
+			}
+			WriteResponse(ctx, http.StatusInternalServerError, LocalCode_InternalServerError, err.Error())
+			panic(err)
 		}
 	}
 }
 
-func HandleServiceErrors(c *gin.Context, err error) {
-	err = convertGORMErrors(err)
-	if e, ok := err.(CWSLocalizedResponse); ok {
-		if cwsbase.GetEnvironmentInfo().DebugMode {
-			log.Println(e)
-		}
-
-		if e.ActualError != nil {
-			WriteResponse(c, e.StatusCode, e.LocalCode, e.ActualError.Error(), e.EmbeddingStrings...)
-		} else {
-			WriteResponse(c, e.StatusCode, e.LocalCode, nil, e.EmbeddingStrings...)
-		}
-		return
-	}
-
-	logGroup := cwsbase.GetEnv("CLOUDWATCHLOG_LOG_GROUP", "")
-	if logGroup != "" {
-		proxy := cwsaws.GetCloudWatchLogProxy(logGroup, c)
-		e := proxy.SendMessage(err.Error())
-		if e != nil {
-			log.Println(e)
-		}
-	}
-
-	WriteResponse(c, http.StatusInternalServerError, LocalCode_InternalServerError, err.Error())
-	panic(err)
-}
-
-func StructToMap(obj any) (map[string]any, error) {
-	b, err := json.Marshal(obj)
-	if err != nil {
-		return nil, err
-	}
-
-	var data map[string]any
-	err = json.Unmarshal(b, &data)
-	if err != nil {
-		return nil, err
-	}
-	return data, nil
-}
-
-func StructToAttributeValueMap(s any, modify ...func(key string, val any) any) (map[string]types.AttributeValue, error) {
-	m, err := cwsbase.StructToMapEscapeEmpty(s)
-	if err != nil {
-		return nil, err
-	}
-
-	if len(modify) > 0 {
-		for k, v := range m {
-			m[k] = modify[0](k, v)
-		}
-	}
-
-	result, err := attributevalue.MarshalMap(m)
-	if err != nil {
-		return nil, err
-	}
-	return result, nil
-}
-
+// WriteResponse writes a standardized JSON response with localized message
+// The response format includes code, message, and data fields
 func WriteResponse(c *gin.Context, statusCode int, localCode cwsbase.LocalizationCode, data any, localEmbeddingStrs ...any) {
 	c.JSON(statusCode, gin.H{
 		"code":    localCode,
@@ -179,6 +82,9 @@ func WriteResponse(c *gin.Context, statusCode int, localCode cwsbase.Localizatio
 	})
 }
 
+// WriteResponseWithMongoCursor streams MongoDB cursor data as a JSON response without loading all data into memory
+// This is useful for large datasets as it streams data directly from MongoDB to the HTTP response
+// Generic type T represents the data type being streamed
 func WriteResponseWithMongoCursor[T any](c *gin.Context, statusCode int, localCode cwsbase.LocalizationCode, cursor *mongo.Cursor, localEmbeddingStrs ...any) error {
 	c.Writer.WriteHeader(statusCode)
 	c.Writer.Header().Set("Content-Type", "application/json; charset=utf-8")
@@ -218,22 +124,14 @@ func WriteResponseWithMongoCursor[T any](c *gin.Context, statusCode int, localCo
 	return nil
 }
 
-func IsStringInSlice(val string, ss []string) bool {
-	if len(val) == 0 {
-		return false
-	}
-	for _, s := range ss {
-		if val == s {
-			return true
-		}
-	}
-	return false
-}
-
-func convertGORMErrors(err error) error {
+// convertDataBaseErrors converts common database errors to localized CWSLocalizedErrorResponse errors
+// Currently handles GORM "record not found" and MongoDB "no documents" errors
+func convertDataBaseErrors(err error) error {
 	switch err {
 	case gorm.ErrRecordNotFound:
-		return CWSResponseNotFound
+		return CWSNotFoundError.EmbedActualError(err)
+	case mongo.ErrNoDocuments:
+		return CWSNotFoundError.EmbedActualError(err)
 	}
 	return err
 }

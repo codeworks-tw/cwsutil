@@ -129,11 +129,6 @@ func (r *MongoDBRepository[PKey]) Exist(ctx context.Context, filter bson.M) (boo
 		return false, err
 	}
 
-	//filter, err := marshalToBsonMap(pkey)
-	//if err != nil {
-	//	return false, err
-	//}
-
 	count, err := collection.CountDocuments(ctx, filter, nil)
 
 	if count > 0 {
