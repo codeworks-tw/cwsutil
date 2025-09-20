@@ -19,6 +19,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs"
 	"github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs/types"
+	"github.com/codeworks-tw/cwsutil/cwsbase"
 )
 
 type CloudWatchLogsProxy struct {
@@ -27,13 +28,13 @@ type CloudWatchLogsProxy struct {
 	LogGroup string
 }
 
-func GetCloudWatchLogProxy(logGroup string, ctx context.Context, optFns ...func(*config.LoadOptions) error) CloudWatchLogsProxy {
+func GetCloudWatchLogProxy(ctx context.Context, optFns ...func(*config.LoadOptions) error) CloudWatchLogsProxy {
 	if ctx == nil {
 		ctx = context.TODO()
 	}
 
 	return CloudWatchLogsProxy{
-		LogGroup: logGroup,
+		LogGroup: cwsbase.GetEnv("CLOUDWATCHLOG_LOG_GROUP", ""),
 		Context:  &ctx,
 		Client: GetSingletonClient(ClientName_CloudWatch, ctx, func(cfg aws.Config) *cloudwatchlogs.Client {
 			return cloudwatchlogs.NewFromConfig(cfg)
