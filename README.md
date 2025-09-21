@@ -14,7 +14,7 @@
 | LOCALIZATION_LANGUAGE | cwsbase  | string | 多語系設定 "en"/"zh_tw"/"zh_cn" (預設: en)  |
 
 ## 版本發佈記錄
-* 0.3.7 - 2025年9月20日
+* 0.3.8 - 2025年9月21日
 * 0.3.6 - 2024年6月15日
 * 0.3.5 - 2024年5月25日
 * 0.1.0 - 2024年4月11日
@@ -410,38 +410,104 @@ fmt.Printf("更新了 %d 筆資料", result.ModifiedCount)
 
 ## 五、有限狀態機模組 (cwsfsm)
 
-提供強大的狀態機實作，適用於工作流程、訂單處理等場景：
+提供強大的狀態機實作，適用於工作流程、訂單處理、審批流程等場景。此模組允許您定義離散的步驟，這些步驟可以根據業務邏輯相互轉換。
 
-### 5.1 基本用法
+### 5.1 核心概念
+
+- **FSMStepName**: 步驟的唯一識別符
+- **FSMStepRegistry**: 管理所有步驟的註冊表
+- **FSMStepTransaction**: 在步驟間傳遞資料的交易物件
+- **IFSMStep**: 所有步驟必須實現的介面
+- **FSMStep**: 函數式步驟實作
+
+### 5.2 基本用法
 
 ```go
-import "github.com/codeworks-tw/cwsutil/cwsfsm"
+import (
+    "context"
+    "fmt"
+    "github.com/codeworks-tw/cwsutil/cwsfsm"
+)
 
-// TestStep implements IFSMStep[int]
-var TestStep FSMStep[int] = func(ctx context.Context, transaction *FSMStepTransaction[int]) (*FSMStepTransaction[int], error) {
-	// Increment count and continue
-	if transaction.Data >= 10 {
-		transaction.NextStep = TestEndStep // next to end step
-		return transaction, nil
-	}
-	fmt.Println("Count:", transaction.Data)
-	transaction.Data++
-	transaction.NextStep = transaction.CurrentStep // loop
-	return transaction, nil
+// 定義步驟名稱
+const (
+    StartStep    cwsfsm.FSMStepName = "StartStep"
+    ProcessStep  cwsfsm.FSMStepName = "ProcessStep"
+    EndStep      cwsfsm.FSMStepName = "EndStep"
+)
+
+// 定義步驟實作
+var startStep cwsfsm.FSMStep[int] = func(ctx context.Context, transaction *cwsfsm.FSMStepTransaction[int]) (*cwsfsm.FSMStepTransaction[int], error) {
+    fmt.Println("開始處理，初始值:", transaction.Data)
+    transaction.Data = 1
+    transaction.NextStep = ProcessStep // 設定下一個步驟
+    return transaction, nil
 }
 
-var TestEndStep FSMStep[int] = func(ctx context.Context, transaction *FSMStepTransaction[int]) (*FSMStepTransaction[int], error) {
-	// End count
-	fmt.Println("Final:", transaction.Data)
-	return nil, nil
+var processStep cwsfsm.FSMStep[int] = func(ctx context.Context, transaction *cwsfsm.FSMStepTransaction[int]) (*cwsfsm.FSMStepTransaction[int], error) {
+    // 遞增計數並決定下一步
+    if transaction.Data >= 10 {
+        transaction.NextStep = EndStep // 結束處理
+        return transaction, nil
+    }
+    fmt.Println("處理中，當前值:", transaction.Data)
+    transaction.Data++
+    transaction.NextStep = ProcessStep // 繼續循環
+    return transaction, nil
 }
 
-// Create an action with test steps
-if err := RunFSMSetps(context.Background(), &FSMStepTransaction[int]{
-		NextStep: TestStep,
-		Data:     0,
-}); err != nil {
-		t.Error(err)
+var endStep cwsfsm.FSMStep[int] = func(ctx context.Context, transaction *cwsfsm.FSMStepTransaction[int]) (*cwsfsm.FSMStepTransaction[int], error) {
+    fmt.Println("處理完成，最終值:", transaction.Data)
+    // 不設定 NextStep，表示工作流程結束
+    return transaction, nil
+}
+
+// 建立步驟註冊表
+stepRegistry := cwsfsm.FSMStepRegistry[int]{
+    StartStep:   startStep,
+    ProcessStep: processStep,
+    EndStep:     endStep,
+}
+
+// 執行狀態機
+transaction := &cwsfsm.FSMStepTransaction[int]{
+    NextStep: StartStep,
+    Data:     0,
+}
+
+if err := cwsfsm.RunFSMSteps(context.Background(), stepRegistry, transaction); err != nil {
+    fmt.Printf("執行錯誤: %v\n", err)
+}
+```
+
+### 5.3 動態步驟註冊
+
+```go
+// 建立空的註冊表
+registry := make(cwsfsm.FSMStepRegistry[string])
+
+// 動態新增步驟
+registry.SetFSMStep("step1", func(ctx context.Context, transaction *cwsfsm.FSMStepTransaction[string]) (*cwsfsm.FSMStepTransaction[string], error) {
+    transaction.Data += " -> step1"
+    transaction.NextStep = "step2"
+    return transaction, nil
+})
+
+registry.SetFSMStep("step2", func(ctx context.Context, transaction *cwsfsm.FSMStepTransaction[string]) (*cwsfsm.FSMStepTransaction[string], error) {
+    transaction.Data += " -> step2"
+    return transaction, nil // 結束工作流程
+})
+
+// 執行動態建立的工作流程
+transaction := &cwsfsm.FSMStepTransaction[string]{
+    NextStep: "step1",
+    Data:     "start",
+}
+
+if err := cwsfsm.RunFSMSteps(context.Background(), registry, transaction); err != nil {
+    fmt.Printf("執行錯誤: %v\n", err)
+} else {
+    fmt.Printf("結果: %s\n", transaction.Data) // 輸出: "start -> step1 -> step2"
 }
 ```
 
