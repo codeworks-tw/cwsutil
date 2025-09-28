@@ -8,6 +8,7 @@ import (
 	"gorm.io/driver/postgres"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 var db_instance *gorm.DB = nil
@@ -114,4 +115,46 @@ func GetPrimaryKeyValueMap(db *gorm.DB, model any) (WhereCaluse, error) {
 		}
 	}
 	return wc, nil
+}
+
+func GetPrimaryKeyColumns(db *gorm.DB, model any) ([]clause.Column, error) {
+	stmt := &gorm.Statement{DB: db}
+	if err := stmt.Parse(model); err != nil {
+		return nil, err
+	}
+
+	var inInterface map[string]any
+	inrec, _ := json.Marshal(model)
+	json.Unmarshal(inrec, &inInterface)
+	var columns []clause.Column
+	for _, field := range stmt.Schema.Fields {
+		if field.TagSettings["PRIMARYKEY"] == "PRIMARYKEY" {
+			columns = append(columns, clause.Column{Name: field.DBName})
+		}
+	}
+	return columns, nil
+}
+
+func GetNonPrimaryKeyAssignments(db *gorm.DB, model any) (clause.Set, error) {
+	stmt := &gorm.Statement{DB: db}
+	if err := stmt.Parse(model); err != nil {
+		return nil, err
+	}
+
+	var inInterface map[string]any
+	inrec, _ := json.Marshal(model)
+	json.Unmarshal(inrec, &inInterface)
+	var assignments clause.Set
+	for _, field := range stmt.Schema.Fields {
+		if field.TagSettings["PRIMARYKEY"] != "PRIMARYKEY" && field.DBName != "created_at" {
+			if field.DBName == "updated_at" {
+				inInterface[field.Name] = time.Now()
+			}
+			assignments = append(assignments, clause.Assignment{
+				Column: clause.Column{Name: field.DBName},
+				Value:  inInterface[field.Name],
+			})
+		}
+	}
+	return assignments, nil
 }

@@ -6,7 +6,6 @@ import (
 	"errors"
 	"reflect"
 
-	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
 
@@ -85,26 +84,18 @@ func (r *Repository[T]) Upsert(entity *T) error {
 	if r.isGenericPointer() {
 		return errors.New("generic type T must be a struct")
 	}
-	wc, err := GetPrimaryKeyValueMap(r.session.GetDb(), entity)
+	assignments, err := GetNonPrimaryKeyAssignments(r.session.GetDb(), entity)
 	if err != nil {
 		return err
 	}
-	result, err := r.Get(wc)
-	if err != nil && err != gorm.ErrRecordNotFound {
+	columns, err := GetPrimaryKeyColumns(r.session.GetDb(), entity)
+	if err != nil {
 		return err
 	}
-	if result != nil {
-		if err := applyValue(entity, result); err != nil {
-			return err
-		}
-		tx := r.session.GetDb().Clauses(clause.Returning{}).WithContext(r.context).Save(result)
-		if tx.RowsAffected > 0 {
-			return applyValue(result, entity)
-		}
-	} else {
-		return r.session.GetDb().Clauses(clause.Returning{}).WithContext(r.context).Create(entity).Error
-	}
-	return nil
+	return r.session.GetDb().Clauses(clause.OnConflict{
+		Columns:   columns, // The conflicting primary key column(s)
+		DoUpdates: assignments,
+	}).Create(&entity).Error
 }
 
 func (r *Repository[T]) Delete(entity *T) error {
