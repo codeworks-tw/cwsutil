@@ -92,7 +92,7 @@ func (r *Repository[T]) Upsert(entity *T) error {
 	if err != nil {
 		return err
 	}
-	return r.session.GetDb().Clauses(clause.OnConflict{
+	return r.session.GetDb().Clauses(clause.Returning{}, clause.OnConflict{
 		Columns:   columns, // The conflicting primary key column(s)
 		DoUpdates: assignments,
 	}).Create(&entity).Error
