@@ -1,10 +1,9 @@
 package cwssql
 
 import (
-	"database/sql/driver"
-	"encoding/json"
-	"errors"
 	"time"
+
+	"gorm.io/datatypes"
 )
 
 // LegacyBaseIdModel provides a base model with UUID primary key using uuid_generate_v4() function
@@ -24,63 +23,13 @@ type BaseIdModel struct {
 // BaseTimeModel provides automatic timestamp fields for created and updated times
 type BaseTimeModel struct {
 	// CreatedAt is automatically set when the record is created
-	CreatedAt time.Time
+	CreatedAt time.Time `gorm:"autoCreateTime"`
 	// UpdatedAt is automatically updated when the record is modified
-	UpdatedAt time.Time
-}
-
-// JSONB represents a PostgreSQL JSONB field type that implements sql/driver interfaces
-// This type automatically handles marshaling/unmarshaling between Go values and PostgreSQL JSONB
-type JSONB json.RawMessage
-
-// Value implements the driver.Valuer interface for JSONB
-// Converts the JSONB value to a format suitable for database storage
-func (j JSONB) Value() (driver.Value, error) {
-	return json.Marshal(j)
-}
-
-// Scan implements the sql.Scanner interface for JSONB
-// Converts database value back to JSONB format
-func (j *JSONB) Scan(value any) error {
-	b, ok := value.([]byte)
-	if !ok {
-		return errors.New("type assertion to []byte failed")
-	}
-	return json.Unmarshal(b, &j)
+	UpdatedAt time.Time `gorm:"autoUpdateTime"`
 }
 
 // BaseJsonBModel provides a base model with a JSONB field for PostgreSQL
-type BaseJsonBModel struct {
-	// JsonBData stores arbitrary JSON data in PostgreSQL JSONB format
-	JsonBData JSONB `gorm:"type:jsonb" json:"jsonb_data"`
-}
-
-// JSON represents a MySQL JSON field type that implements sql/driver interfaces
-type JSON []byte
-
-// Value implements the driver.Valuer interface for JSON
-// Returns the JSON value as a string for database storage
-func (j JSON) Value() (driver.Value, error) {
-	return string(j), nil
-}
-
-// Scan implements the sql.Scanner interface for JSON
-// Converts database value back to JSON byte slice
-func (j *JSON) Scan(value any) error {
-	if value == nil {
-		*j = nil
-		return nil
-	}
-	s, ok := value.([]byte)
-	if !ok {
-		return errors.New("type assertion to []byte scan failed")
-	}
-	*j = s
-	return nil
-}
-
-// BaseJsonModel provides a base model with a JSON field for MySQL
 type BaseJsonModel struct {
-	// JsonData stores arbitrary JSON data in MySQL JSON format
-	JsonData JSON `gorm:"type:json" json:"json_data"`
+	// JsonBData stores arbitrary JSON data in PostgreSQL JSONB format
+	JsonData datatypes.JSON `gorm:"type:json" json:"json_data"`
 }

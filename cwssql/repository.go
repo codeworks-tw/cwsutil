@@ -2,9 +2,11 @@ package cwssql
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"reflect"
 
+	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
 
@@ -83,8 +85,26 @@ func (r *Repository[T]) Upsert(entity *T) error {
 	if r.isGenericPointer() {
 		return errors.New("generic type T must be a struct")
 	}
-	result := r.session.GetDb().WithContext(r.context).Save(entity)
-	return result.Error
+	wc, err := GetPrimaryKeyValueMap(r.session.GetDb(), entity)
+	if err != nil {
+		return err
+	}
+	result, err := r.Get(wc)
+	if err != nil && err != gorm.ErrRecordNotFound {
+		return err
+	}
+	if result != nil {
+		if err := applyValue(entity, result); err != nil {
+			return err
+		}
+		tx := r.session.GetDb().Clauses(clause.Returning{}).WithContext(r.context).Save(result)
+		if tx.RowsAffected > 0 {
+			return applyValue(result, entity)
+		}
+	} else {
+		return r.session.GetDb().Clauses(clause.Returning{}).WithContext(r.context).Create(entity).Error
+	}
+	return nil
 }
 
 func (r *Repository[T]) Delete(entity *T) error {
@@ -139,12 +159,14 @@ func (r *Repository[T]) Refresh(entity *T) error {
 	if err != nil {
 		return err
 	}
-	query := r.session.GetDb().Clauses(clause.Returning{}).WithContext(r.context)
-	for key, values := range wc {
-		query = query.Where(key, values...)
+	result, err := r.Get(wc)
+	if err != nil {
+		return err
 	}
-	result := query.First(&entity)
-	return result.Error
+	if result != nil {
+		return applyValue(result, entity)
+	}
+	return nil
 }
 
 func (r *Repository[T]) Begin() error {
@@ -157,6 +179,18 @@ func (r *Repository[T]) Rollback() error {
 
 func (r *Repository[T]) Commit() error {
 	return r.session.Commit()
+}
+
+func applyValue(from any, to any) error {
+	b, err := json.Marshal(from)
+	if err != nil {
+		return err
+	}
+	err = json.Unmarshal(b, to)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 // NewRepository creates a new generic repository

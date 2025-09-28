@@ -106,7 +106,11 @@ func GetPrimaryKeyValueMap(db *gorm.DB, model any) (WhereCaluse, error) {
 	var wc WhereCaluse
 	for _, field := range stmt.Schema.Fields {
 		if field.TagSettings["PRIMARYKEY"] == "PRIMARYKEY" {
-			wc = Eq(field.Name, inInterface[field.Name])
+			if wc == nil {
+				wc = Eq(field.Name, inInterface[field.Name])
+				continue
+			}
+			wc = wc.Eq(field.Name, inInterface[field.Name])
 		}
 	}
 	return wc, nil

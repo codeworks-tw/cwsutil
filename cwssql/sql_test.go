@@ -11,6 +11,7 @@ import (
 )
 
 type Account struct {
+	WorkId   string `gorm:"type:text;primaryKey"`
 	Account  string `gorm:"type:text;primaryKey"`
 	Password string `gorm:"type:text;not null"`
 	Enable   bool   `gorm:"default:true"`
@@ -52,11 +53,13 @@ func TestSqlRepository(t *testing.T) {
 	account := &Account{
 		Password: "XXXX",
 		Account:  "test@xxx.com",
+		WorkId:   "XXXXXX",
 	}
 
 	account2 := &Account{
 		Password: "XXXX",
 		Account:  "test2@xxx.com",
+		WorkId:   "XXXXXX",
 	}
 
 	err = repo.Upsert(account)
@@ -71,10 +74,10 @@ func TestSqlRepository(t *testing.T) {
 	}
 	log.Println("Upsert account", account2.Account)
 
-	account.Enable = true
+	account.Enable = false
 	repo.Refresh(account)
 
-	account.Enable = true
+	account.Enable = false
 	err = repo.Upsert(account)
 	if err != nil {
 		panic(err)
