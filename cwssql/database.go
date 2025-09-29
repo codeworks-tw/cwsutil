@@ -146,7 +146,7 @@ func GetNonPrimaryKeyAssignments(db *gorm.DB, model any) (clause.Set, error) {
 	json.Unmarshal(inrec, &inInterface)
 	var assignments clause.Set
 	for _, field := range stmt.Schema.Fields {
-		if field.TagSettings["PRIMARYKEY"] != "PRIMARYKEY" && field.DBName != "created_at" {
+		if field.TagSettings["PRIMARYKEY"] != "PRIMARYKEY" && field.DBName != "" && field.DBName != "created_at" {
 			if field.DBName == "updated_at" {
 				inInterface[field.Name] = time.Now()
 			}
