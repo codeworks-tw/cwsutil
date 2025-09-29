@@ -107,11 +107,15 @@ func GetPrimaryKeyValueMap(db *gorm.DB, model any) (WhereCaluse, error) {
 	var wc WhereCaluse
 	for _, field := range stmt.Schema.Fields {
 		if field.TagSettings["PRIMARYKEY"] == "PRIMARYKEY" {
+			value := inInterface[field.DBName]
+			if value == nil {
+				value = inInterface[field.Name] // field name might affect by json field tag
+			}
 			if wc == nil {
-				wc = Eq(field.Name, inInterface[field.Name])
+				wc = Eq(field.Name, value)
 				continue
 			}
-			wc = wc.Eq(field.Name, inInterface[field.Name])
+			wc = wc.Eq(field.Name, value)
 		}
 	}
 	return wc, nil
@@ -122,10 +126,6 @@ func GetPrimaryKeyColumns(db *gorm.DB, model any) ([]clause.Column, error) {
 	if err := stmt.Parse(model); err != nil {
 		return nil, err
 	}
-
-	var inInterface map[string]any
-	inrec, _ := json.Marshal(model)
-	json.Unmarshal(inrec, &inInterface)
 	var columns []clause.Column
 	for _, field := range stmt.Schema.Fields {
 		if field.TagSettings["PRIMARYKEY"] == "PRIMARYKEY" {
@@ -135,7 +135,7 @@ func GetPrimaryKeyColumns(db *gorm.DB, model any) ([]clause.Column, error) {
 	return columns, nil
 }
 
-func GetNonPrimaryKeyAssignments(db *gorm.DB, model any) (clause.Set, error) {
+func GetNonPrimaryKeyAssignments(db *gorm.DB, model any, excludeColumns ...string) (clause.Set, error) {
 	stmt := &gorm.Statement{DB: db}
 	if err := stmt.Parse(model); err != nil {
 		return nil, err
@@ -143,16 +143,33 @@ func GetNonPrimaryKeyAssignments(db *gorm.DB, model any) (clause.Set, error) {
 
 	var inInterface map[string]any
 	inrec, _ := json.Marshal(model)
-	json.Unmarshal(inrec, &inInterface)
-	var assignments clause.Set
+	err := json.Unmarshal(inrec, &inInterface)
+	if err != nil {
+		return nil, err
+	}
+	var assignments []clause.Assignment
 	for _, field := range stmt.Schema.Fields {
 		if field.TagSettings["PRIMARYKEY"] != "PRIMARYKEY" && field.DBName != "" && field.DBName != "created_at" {
 			if field.DBName == "updated_at" {
-				inInterface[field.Name] = time.Now()
+				inInterface[field.DBName] = time.Now()
+			}
+			exclue := false
+			for _, excludeColumn := range excludeColumns {
+				if field.DBName == excludeColumn || field.Name == excludeColumn {
+					exclue = true
+					break
+				}
+			}
+			if exclue {
+				continue
+			}
+			value := inInterface[field.DBName]
+			if value == nil {
+				value = inInterface[field.Name] // field name might affect by json field tag
 			}
 			assignments = append(assignments, clause.Assignment{
 				Column: clause.Column{Name: field.DBName},
-				Value:  inInterface[field.Name],
+				Value:  value,
 			})
 		}
 	}

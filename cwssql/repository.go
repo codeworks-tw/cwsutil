@@ -15,7 +15,7 @@ type IRepository[T any] interface {
 	GetContext() context.Context                        // Get the context
 	GetAll(whereClause ...WhereCaluse) ([]*T, error)    // Get entities. Note: GetAll() equals Select all records.
 	Get(whereClause ...WhereCaluse) (*T, error)         // Get entity
-	Upsert(entity *T) error                             // Create or Replace
+	Upsert(entity *T, excludeColumns ...string) error   // Create or Replace
 	Delete(entity *T) error                             // Delete entity
 	DeleteAll(whereClause ...WhereCaluse) ([]*T, error) // Delete entities
 	Refresh(entity *T) error                            // Refresh entity
@@ -77,14 +77,14 @@ func (r *Repository[T]) GetAll(whereClauses ...WhereCaluse) ([]*T, error) {
 	return entities, result.Error
 }
 
-func (r *Repository[T]) Upsert(entity *T) error {
+func (r *Repository[T]) Upsert(entity *T, excludeColumns ...string) error {
 	if entity == nil {
 		return errors.New("entity must not be nil")
 	}
 	if r.isGenericPointer() {
 		return errors.New("generic type T must be a struct")
 	}
-	assignments, err := GetNonPrimaryKeyAssignments(r.session.GetDb(), entity)
+	assignments, err := GetNonPrimaryKeyAssignments(r.session.GetDb(), entity, excludeColumns...)
 	if err != nil {
 		return err
 	}
