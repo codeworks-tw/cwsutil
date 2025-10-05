@@ -64,16 +64,6 @@ func (w WhereCaluse) IsNotNull(key string) WhereCaluse {
 	return w
 }
 
-func (w WhereCaluse) Offset(offset int) WhereCaluse {
-	w["OFFSET ?"] = []any{offset}
-	return w
-}
-
-func (w WhereCaluse) Limit(limit int) WhereCaluse {
-	w["LIMIT ?"] = []any{limit}
-	return w
-}
-
 func (w WhereCaluse) And(clauses ...WhereCaluse) WhereCaluse {
 	query := ""
 	vs := []any{}
