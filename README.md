@@ -1,52 +1,213 @@
-# CWS 工具庫 (CWS Utilities)
+# CWS Utilities | CWS 工具庫
 
-這是一個為 Go 語言開發的綜合性工具庫，提供了多個模組來簡化 Web API 開發、資料庫操作、加密、多語系支援等功能。
+A comprehensive Go utility library that simplifies Web API development, database operations, encryption, localization, and cloud services integration.
 
-## 環境變數配置
+這是一個為 Go 語言開發的綜合性工具庫，提供了多個模組來簡化 Web API 開發、資料庫操作、加密、多語系支援和雲端服務整合等功能。
 
-| 變數名稱              | 所屬模組 | 類型   | 說明                                        |
-| --------------------- | -------- | ------ | ------------------------------------------- |
-| CRYPTO_KEY_HEX        | cwsbase  | string | 加密金鑰 (使用 "openssl rand -hex 32" 產生) |
-| CRYPTO_IV_HEX         | cwsbase  | string | 加密向量 (使用 "openssl rand -hex 16" 產生) |
-| ENV                   | cwsbase  | string | 環境設定 "test"/"prod"                      |
-| IS_LOCAL              | cwsbase  | bool   | 本地開發模式 "true"/"false"/"1"/"0"         |
-| DEBUG                 | cwsbase  | bool   | 除錯模式 "true"/"false"/"1"/"0"             |
-| LOCALIZATION_LANGUAGE | cwsbase  | string | 多語系設定 "en"/"zh_tw"/"zh_cn" (預設: en)  |
+[![Go Version](https://img.shields.io/badge/Go-1.23+-00ADD8?style=flat&logo=go)](https://golang.org/)
+[![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Go Report Card](https://goreportcard.com/badge/github.com/codeworks-tw/cwsutil)](https://goreportcard.com/report/github.com/codeworks-tw/cwsutil)
 
-## 版本發佈記錄
-* 0.3.14 - 2025年9月29日
-* 0.3.8 - 2025年9月21日
-* 0.3.6 - 2024年6月15日
-* 0.3.5 - 2024年5月25日
-* 0.1.0 - 2024年4月11日
+## Installation | 安裝
 
-## 模組架構
+```bash
+go get github.com/codeworks-tw/cwsutil
+```
 
-### 主要模組
-- **cwsbase** - 基礎工具模組
-- **cwssql** - SQL 資料庫操作模組
-- **cwsnosql** - NoSQL 資料庫操作模組
-- **cwsfsm** - 有限狀態機模組
+## Environment Variables | 環境變數配置
+
+| Variable Name | Module | Type | Description | 說明 |
+|---------------|---------|------|-------------|------|
+| `CRYPTO_KEY_HEX` | cwsbase | string | Encryption key (generate with `openssl rand -hex 32`) | 加密金鑰 (使用 `openssl rand -hex 32` 產生) |
+| `CRYPTO_IV_HEX` | cwsbase | string | Encryption IV (generate with `openssl rand -hex 16`) | 加密向量 (使用 `openssl rand -hex 16` 產生) |
+| `ENV` | cwsbase | string | Environment setting: `test`/`prod` | 環境設定: `test`/`prod` |
+| `IS_LOCAL` | cwsbase | bool | Local development mode: `true`/`false`/`1`/`0` | 本地開發模式: `true`/`false`/`1`/`0` |
+| `DEBUG` | cwsbase | bool | Debug mode: `true`/`false`/`1`/`0` | 除錯模式: `true`/`false`/`1`/`0` |
+| `LOCALIZATION_LANGUAGE` | cwsbase | string | Localization setting: `en`/`zh_tw`/`zh_cn` (default: `en`) | 多語系設定: `en`/`zh_tw`/`zh_cn` (預設: `en`) |
+
+## Version History | 版本發佈記錄
+
+- **v0.3.15** - Oct 6, 2025 | 2025年10月6日
+- **v0.3.14** - September 28, 2025 | 2025年9月28日
+- **v0.3.8** - September 21, 2025 | 2025年9月21日  
+- **v0.3.6** - June 15, 2024 | 2024年6月15日
+- **v0.3.5** - May 25, 2024 | 2024年5月25日
+- **v0.1.0** - April 11, 2024 | 2024年4月11日
+
+## Module Architecture | 模組架構
+
+### Core Modules | 主要模組
+
+- **`cwsutil`** - Main module with HTTP handlers and localized responses | 主模組，提供 HTTP 處理器和本地化回應
+- **`cwsbase`** - Core utilities (encryption, localization, environment) | 基礎工具模組（加密、本地化、環境變數）
+- **`cwssql`** - SQL database operations with GORM | SQL 資料庫操作模組（使用 GORM）
+- **`cwsnosql`** - NoSQL database operations (MongoDB) | NoSQL 資料庫操作模組（MongoDB）
+- **`cwsfsm`** - Finite State Machine implementation | 有限狀態機實作模組
+
+## Table of Contents | 目錄
+
+- [Quick Start | 快速開始](#quick-start--快速開始)
+- [Core Module (cwsutil) | 主模組](#core-module-cwsutil--主模組)
+- [Base Utilities (cwsbase) | 基礎工具](#base-utilities-cwsbase--基礎工具)
+- [SQL Database (cwssql) | SQL 資料庫](#sql-database-cwssql--sql-資料庫)
+- [NoSQL Database (cwsnosql) | NoSQL 資料庫](#nosql-database-cwsnosql--nosql-資料庫)
+- [Finite State Machine (cwsfsm) | 有限狀態機](#finite-state-machine-cwsfsm--有限狀態機)
+- [Best Practices | 最佳實踐](#best-practices--最佳實踐)
+- [API Response Format | API 回應格式](#api-response-format--api-回應格式)
 
 ---
 
-# 使用指南
+## Quick Start | 快速開始
 
-## 一、基礎工具模組 (cwsbase)
+```go
+package main
 
-### 1.1 多語系支援
+import (
+    "context"
+    "net/http"
+    
+    "github.com/codeworks-tw/cwsutil"
+    "github.com/codeworks-tw/cwsutil/cwsbase"
+    "github.com/gin-gonic/gin"
+)
 
-提供完整的多語系訊息管理功能，支援英文、繁體中文、簡體中文。
+func main() {
+    // Initialize localization
+    // 初始化多語系
+    cwsutil.InitBasicLocalizationData()
+    
+    r := gin.Default()
+    
+    // Simple handler with unified error handling
+    // 使用統一錯誤處理的簡單處理器
+    r.GET("/users/:id", cwsutil.WrapHandler(func(ctx *gin.Context) error {
+        id := ctx.Param("id")
+        
+        // Simulate user lookup
+        // 模擬用戶查詢
+        if id == "" {
+        return cwsutil.BadRequestErrorResponse.MessageValues("User ID is required")
+        }
+        
+        // Success response
+        // 成功回應
+        cwsutil.WriteResponse(ctx, http.StatusOK, cwsutil.LocalCode_OK, map[string]string{
+            "id": id,
+            "name": "John Doe",
+        })
+        return nil
+    }))
+    
+    r.Run(":8080")
+}
+```
 
-#### 基本用法：
+---
+
+# Usage Guide | 使用指南
+
+## Core Module (cwsutil) | 主模組
+
+### Unified Error Handling | 統一錯誤處理
+
+The core module provides unified error handling with localized responses:
+主模組提供統一的錯誤處理和本地化回應：
+
+```go
+import "github.com/codeworks-tw/cwsutil"
+
+// Pre-defined error responses | 預定義錯誤回應
+var handler gin.HandlerFunc = cwsutil.WrapHandler(func(ctx *gin.Context) error {
+    id := ctx.Param("id")
+    
+    // Business logic | 業務邏輯
+    data, err := findDataById(id)
+    if err != nil {
+        // Return localized error with embedded values
+        // 返回嵌入參數的本地化錯誤
+        return cwsutil.NotFoundErrorResponse.MessageValues(id).EmbedError(err)
+    }
+    
+    // Success response | 成功回應
+    cwsutil.WriteResponse(ctx, http.StatusOK, cwsutil.LocalCode_OK, data)
+    return nil
+})
+```
+
+### Available Pre-defined Responses | 可用的預定義回應
+
+```go
+// Error responses | 錯誤回應
+cwsutil.InternalServerErrorResponse  // 500 Internal Server Error
+cwsutil.BadRequestErrorResponse      // 400 Bad Request  
+cwsutil.UnauthorizedErrorResponse    // 401 Unauthorized
+cwsutil.ForbiddenErrorResponse       // 403 Forbidden
+cwsutil.NotFoundErrorResponse        // 404 Not Found
+
+// Success response | 成功回應
+cwsutil.OKResponse                   // 200 OK
+```
+
+### Request Parsing | 請求解析
+
+```go
+func handler(ctx *gin.Context) error {
+    var requestBody RequestModel
+    var queryParams QueryModel
+    
+    // Parse request body (JSON, XML, YAML, form data)
+    // 解析請求主體（JSON、XML、YAML、表單數據）
+    if err := cwsutil.ParseBody(ctx, &requestBody); err != nil {
+        return err
+    }
+    
+    // Parse query parameters | 解析查詢參數
+    if err := cwsutil.ParseQuery(ctx, &queryParams); err != nil {
+        return err
+    }
+    
+    // Process business logic... | 處理業務邏輯...
+    return nil
+}
+```
+
+### MongoDB Streaming Response | MongoDB 串流回應
+
+Efficient streaming for large datasets without loading all data into memory:
+為大量數據集提供高效串流，不會將所有數據載入內存：
+
+```go
+func getUsers(ctx *gin.Context) error {
+    cursor, err := getUsersCursor() // Get MongoDB Cursor | 取得 MongoDB Cursor
+    if err != nil {
+        return err
+    }
+    defer cursor.Close(ctx)
+    
+    // Stream response without loading all data into memory
+    // 串流回應，不會將所有數據載入內存
+    return cwsutil.WriteResponseWithMongoCursor[User](ctx, 
+        http.StatusOK, cwsutil.LocalCode_OK, cursor)
+}
+```
+
+---
+
+## Base Utilities (cwsbase) | 基礎工具
+
+### Localization Support | 多語系支援
+
+Comprehensive localization with support for English, Traditional Chinese, and Simplified Chinese:
+完整的多語系支援，支援英文、繁體中文和簡體中文：
+
 ```go
 import "github.com/codeworks-tw/cwsutil/cwsbase"
 
-// 初始化基本多語系資料
+// Initialize basic localization data | 初始化基本多語系數據
 cwsutil.InitBasicLocalizationData()
 
-// 自訂多語系資料
-const LocalizationData string = `{
+// Custom localization data | 自定義多語系數據
+const LocalizationData = `{
     "en": {
         "10000": "Data not found - Id: %s"
     },
@@ -58,225 +219,159 @@ const LocalizationData string = `{
     }
 }`
 
-// 更新多語系資料
-cwsbase.UpdateLocalizationData([]byte(LocalizationData))
+// Update localization data | 更新多語系數據
+cwsutil.SetLocalizationData(LocalizationData)
 
-// 取得多語系訊息
+// Get localized message | 取得本地化訊息
 message := cwsbase.GetLocalizationMessage("10000", "123")
 ```
 
-### 1.2 環境變數管理
+### Environment Variable Management | 環境變數管理
 
-提供型別安全的環境變數讀取功能：
+Type-safe environment variable reading with default values:
+提供型別安全的環境變數讀取功能，支援預設值：
 
 ```go
+// Read environment variables with defaults
 // 讀取環境變數，支援預設值
 port := cwsbase.GetEnv("PORT", 8080)        // int
 isDebug := cwsbase.GetEnv("DEBUG", false)  // bool
-dbUrl := cwsbase.GetEnv[string]("DB_URL")   // string (必填)
+dbUrl := cwsbase.GetEnv[string]("DB_URL")   // string (required) | 字串（必填）
 
-// 取得環境資訊
+// Get environment information | 取得環境資訊
 envInfo := cwsbase.GetEnvironmentInfo()
-fmt.Printf("環境: %s, 除錯: %t, 本地: %t", envInfo.Env, envInfo.DebugMode, envInfo.IsLocal)
+fmt.Printf("Env: %s, Debug: %t, Local: %t", envInfo.Env, envInfo.DebugMode, envInfo.IsLocal)
 ```
 
-### 1.3 加密功能
+### Encryption | 加密功能
 
+AES-CBC encryption and decryption:
 提供 AES-CBC 加密/解密功能：
 
 ```go
-// 加密 map 資料
+// Encrypt map data | 加密 map 資料
 data := map[string]any{
     "userId": 123,
     "role":   "admin",
 }
 encrypted, err := cwsbase.EncryptMap(data)
 
-// 解密回 map 資料
+// Decrypt back to map data | 解密回 map 資料
 decrypted, err := cwsbase.DecryptToMap(encrypted)
 ```
 
-### 1.4 工具函數
+### Utility Functions | 工具函數
 
 ```go
-// 字串處理
+// String processing | 字串處理
 camelCase := "HelloWorld"
 snakeCase := cwsbase.ToSnakeCase(camelCase) // "hello_world"
 capitalized := cwsbase.StringToCapital("hello") // "Hello"
 
-// 時間處理
-timestamp := cwsbase.GetCurrentTimestamp()        // Unix 時間戳
-timeStr := cwsbase.GetCurrentTimestampString()    // 字串格式時間戳
-dateTime := cwsbase.IntToDateTime(1234567890)     // 格式化日期時間
+// Time processing | 時間處理
+timestamp := cwsbase.GetCurrentTimestamp()        // Unix timestamp | Unix 時間戳
+timeStr := cwsbase.GetCurrentTimestampString()    // String format timestamp | 字串格式時間戳
+dateTime := cwsbase.IntToDateTime(1234567890)     // Formatted date time | 格式化日期時間
 
-// 結構轉換
+// Struct conversion | 結構轉換
 struct2map, err := cwsbase.StructToMap(someStruct)
 struct2mapFiltered, err := cwsbase.StructToMapEscapeEmpty(someStruct)
 
-// HTTP 請求
+// HTTP requests | HTTP 請求
 response, err := cwsbase.SendHttpRequestJson(ctx, "POST", url, jsonBody, headers)
 body, err := cwsbase.ReadHttpBody(*response)
 ```
 
-### 1.5 堆疊資料結構
+### Generic Stack Data Structure | 泛型堆疊資料結構
 
+Generic stack implementation:
 提供泛型堆疊實作：
 
 ```go
-// 建立堆疊
+// Create stack | 建立堆疊
 stack := cwsbase.New[int]()
 
-// 操作堆疊
+// Stack operations | 操作堆疊
 value := 42
 stack.Push(&value)
-peek := stack.Peek()    // 查看頂部元素
-popped := stack.Pop()   // 取出頂部元素
-length := stack.Len()   // 取得長度
+peek := stack.Peek()    // View top element | 查看頂部元素
+popped := stack.Pop()   // Remove top element | 取出頂部元素
+length := stack.Len()   // Get length | 取得長度
 ```
 
-## 二、Web API 開發 (主模組)
+---
 
-### 2.1 統一錯誤處理
+## SQL Database (cwssql) | SQL 資料庫
 
-使用 CWSLocalizedErrorResponse 實現統一的錯誤回應格式：
-
-```go
-import "github.com/codeworks-tw/cwsutil"
-
-// 定義自訂錯誤回應
-var DataNotFoundError = cwsutil.CWSLocalizedErrorResponse{
-    StatusCode: http.StatusNotFound,
-    LocalCode:  "10000",
-}
-
-// 在 Handler 中使用
-var handler gin.HandlerFunc = cwsutil.WrapHandler(func(ctx *gin.Context) error {
-    id := ctx.Param("id")
-    
-    // 查詢資料邏輯
-    data, err := findDataById(id)
-    if err != nil {
-        // 回傳自訂錯誤，可嵌入參數和原始錯誤
-        return DataNotFoundError.EmbedValues(id).EmbedActualError(err)
-    }
-    
-    // 成功回應
-    cwsutil.WriteResponse(ctx, http.StatusOK, cwsutil.LocalCode_OK, data)
-    return nil
-})
-```
-
-### 2.2 請求解析
-
-```go
-func handler(ctx *gin.Context) error {
-    var requestBody RequestModel
-    var queryParams QueryModel
-    
-    // 解析請求 Body
-    if err := cwsutil.ParseBody(ctx, &requestBody); err != nil {
-        return err
-    }
-    
-    // 解析查詢參數
-    if err := cwsutil.ParseQuery(ctx, &queryParams); err != nil {
-        return err
-    }
-    
-    // 處理業務邏輯...
-    return nil
-}
-```
-
-### 2.3 MongoDB 串流回應
-
-針對大量資料提供串流回應功能：
-
-```go
-func getUsers(ctx *gin.Context) error {
-    cursor, err := getUsersCursor() // 取得 MongoDB Cursor
-    if err != nil {
-        return err
-    }
-    defer cursor.Close(ctx)
-    
-    // 串流回應，不會將所有資料載入記憶體
-    return cwsutil.WriteResponseWithMongoCursor[User](ctx, 
-        http.StatusOK, cwsutil.LocalCode_OK, cursor)
-}
-```
-
-## 三、SQL 資料庫模組 (cwssql)
-
-### 3.1 資料庫連線
+### Database Connection | 資料庫連線
 
 ```go
 import "github.com/codeworks-tw/cwsutil/cwssql"
 
-// PostgreSQL 連線
+// PostgreSQL connection | PostgreSQL 連線
 db, err := cwssql.NewPostgresDB("postgres://user:pass@host:port/dbname")
 
-// SQLite 連線
+// SQLite connection | SQLite 連線
 db, err := cwssql.NewSQLiteDB("./database.sqlite")
 
-// 建立會話
+// Create session | 建立會話
 session := cwssql.NewSession(db)
 ```
 
-### 3.2 基礎模型
+### Base Models | 基礎模型
 
 ```go
-// 使用預定義的基礎模型
+// Use predefined base models | 使用預定義的基礎模型
 type User struct {
-    cwssql.BaseIdModel    // 提供 UUID 主鍵
-    cwssql.BaseTimeModel  // 提供 CreatedAt, UpdatedAt
+    cwssql.BaseIdModel    // Provides UUID primary key | 提供 UUID 主鍵
+    cwssql.BaseTimeModel  // Provides CreatedAt, UpdatedAt | 提供 CreatedAt, UpdatedAt
     Name  string          `json:"name"`
     Email string          `json:"email"`
 }
 
-// JSON 欄位模型
+// JSON field model | JSON 欄位模型
 type Product struct {
     cwssql.BaseIdModel
-    cwssql.BaseJsonBModel // PostgreSQL JSONB 欄位
+    cwssql.BaseJsonBModel // PostgreSQL JSONB field | PostgreSQL JSONB 欄位
     Name string            `json:"name"`
 }
 ```
 
-### 3.3 Repository 模式
+### Repository Pattern | Repository 模式
 
 ```go
-// 建立 Repository
+// Create Repository | 建立 Repository
 repo := cwssql.NewRepository[User](ctx, session)
 
-// CRUD 操作
+// CRUD operations | CRUD 操作
 user := &User{Name: "張三", Email: "zhang@example.com"}
 
-// 新增或更新
+// Create or Update | 新增或更新
 err = repo.Upsert(user)
 
-// 查詢單一資料
+// Query single record | 查詢單一資料
 user, err = repo.Get(cwssql.Eq("email", "zhang@example.com"))
 
-// 查詢多筆資料
+// Query multiple records | 查詢多筆資料
 users, err = repo.GetAll(cwssql.Like("name", "%張%"))
 
-// 統計數量
+// Count records | 統計數量
 count, err = repo.Count(cwssql.Gte("created_at", yesterday))
 
-// 刪除
+// Delete | 刪除
 err = repo.Delete(user)
 ```
 
-### 3.4 查詢條件建構器
+### Query Builder | 查詢條件建構器
 
 ```go
-// 基本條件
+// Basic conditions | 基本條件
 where1 := cwssql.Eq("status", "active")
 where2 := cwssql.In("role", "admin", "manager")
 where3 := cwssql.Between("age", 18, 65)
 where4 := cwssql.Like("name", "%王%")
 
-// 組合條件
+// Combined conditions | 組合條件
 where := cwssql.And(
     cwssql.Eq("status", "active"),
     cwssql.Or(
@@ -285,21 +380,21 @@ where := cwssql.And(
     ),
 )
 
-// JSON 查詢 (PostgreSQL)
+// JSON queries (PostgreSQL) | JSON 查詢 (PostgreSQL)
 jsonWhere := cwssql.JSONExtract("metadata", "tags", "important")
 jsonbWhere := cwssql.JSONBContains("preferences", `{"theme": "dark"}`)
 ```
 
-### 3.5 交易處理
+### Transaction Management | 交易處理
 
 ```go
-// 開始交易
+// Begin transaction | 開始交易
 err = repo.Begin()
 if err != nil {
     return err
 }
 
-// 執行多個操作
+// Execute multiple operations | 執行多個操作
 if err = repo.Upsert(user1); err != nil {
     repo.Rollback()
     return err
@@ -310,66 +405,68 @@ if err = repo.Upsert(user2); err != nil {
     return err
 }
 
-// 提交交易
+// Commit transaction | 提交交易
 if err = repo.Commit(); err != nil {
     return err
 }
 ```
 
-## 四、NoSQL 資料庫模組 (cwsnosql)
+---
 
-### 4.1 MongoDB Repository
+## NoSQL Database (cwsnosql) | NoSQL 資料庫
+
+### MongoDB Repository | MongoDB Repository
 
 ```go
 import "github.com/codeworks-tw/cwsutil/cwsnosql"
 import "github.com/codeworks-tw/cwsutil/cwsnosql/cwslazymongo"
 
-// 定義主鍵結構
+// Define primary key structure | 定義主鍵結構
 type UserKey struct {
     ID string `bson:"_id"`
 }
 
-// 建立 MongoDB Repository
+// Create MongoDB Repository | 建立 MongoDB Repository
 repo := &cwsnosql.MongoDBRepository[UserKey]{
     Url:            "mongodb://localhost:27017",
     DbName:         "mydb",
     CollectionName: "users",
 }
 
-// 建立唯一索引
+// Create unique index | 建立唯一索引
 err = repo.CreateSimpleUniqueAscendingIndex(ctx)
 
-// CRUD 操作
+// CRUD operations | CRUD 操作
 key := UserKey{ID: "user123"}
 user := User{Name: "李四", Email: "li@example.com"}
 
-// 新增或更新
+// Create or Update | 新增或更新
 err = repo.Upsert(ctx, key, user)
 
-// 查詢
+// Query | 查詢
 var result User
 err = repo.Find(ctx, key, &result)
 
-// 刪除
+// Delete | 刪除
 err = repo.Delete(ctx, key)
 
-// 集合操作
+// Set operations | 集合操作
 _, err = repo.AddValuesToSet(ctx, key, "tags", "golang", "database")
 _, err = repo.PullValuesFromSet(ctx, key, "tags", "old-tag")
 ```
 
-### 4.2 LazyMongo 查詢建構器
+### LazyMongo Query Builder | LazyMongo 查詢建構器
 
 ```go
-// 取得 LazyMongo Repository
+// Get LazyMongo Repository | 取得 LazyMongo Repository
 lazyRepo := repo.ToLazyMongoRepository()
 
-// 建構查詢條件
+// Build query conditions | 建構查詢條件
 filter := cwslazymongo.Eq("status", "active").
     Gte("created_at", time.Now().AddDate(0, -1, 0)).
     In("role", "admin", "user")
 
-// 複雜查詢
+// Complex queries | 複雜查詢
 complexFilter := cwslazymongo.And(
     cwslazymongo.Eq("status", "published"),
     cwslazymongo.Or(
@@ -378,7 +475,7 @@ complexFilter := cwslazymongo.And(
     ),
 )
 
-// 執行查詢
+// Execute query | 執行查詢
 var users []User
 cursor, err := lazyRepo.Select(ctx, filter)
 if err == nil {
@@ -392,10 +489,10 @@ if err == nil {
 }
 ```
 
-### 4.3 更新操作
+### Update Operations | 更新操作
 
 ```go
-// 建構更新操作
+// Build update operations | 建構更新操作
 updater := cwslazymongo.Set(map[string]any{
     "last_login": time.Now(),
     "status":     "online",
@@ -404,24 +501,28 @@ Inc("login_count", 1).
 AddToSet("recent_activities", "login").
 Pull("old_notifications", "expired")
 
-// 執行更新
+// Execute update | 執行更新
 result, err := lazyRepo.Update(ctx, filter, updater)
-fmt.Printf("更新了 %d 筆資料", result.ModifiedCount)
+fmt.Printf("Updated %d records", result.ModifiedCount)
 ```
 
-## 五、有限狀態機模組 (cwsfsm)
+---
+
+## Finite State Machine (cwsfsm) | 有限狀態機
+
+Powerful state machine implementation for workflows, order processing, approval processes, etc. This module allows you to define discrete steps that can transition between each other based on business logic.
 
 提供強大的狀態機實作，適用於工作流程、訂單處理、審批流程等場景。此模組允許您定義離散的步驟，這些步驟可以根據業務邏輯相互轉換。
 
-### 5.1 核心概念
+### Core Concepts | 核心概念
 
-- **FSMStepName**: 步驟的唯一識別符
-- **FSMStepRegistry**: 管理所有步驟的註冊表
-- **FSMStepTransaction**: 在步驟間傳遞資料的交易物件
-- **IFSMStep**: 所有步驟必須實現的介面
-- **FSMStep**: 函數式步驟實作
+- **FSMStepName**: Unique identifier for steps | 步驟的唯一識別符
+- **FSMStepRegistry**: Registry managing all steps | 管理所有步驟的註冊表
+- **FSMStepTransaction**: Transaction object for passing data between steps | 在步驟間傳遞資料的交易物件
+- **IFSMStep**: Interface that all steps must implement | 所有步驟必須實現的介面
+- **FSMStep**: Functional step implementation | 函數式步驟實作
 
-### 5.2 基本用法
+### Basic Usage | 基本用法
 
 ```go
 import (
@@ -430,64 +531,64 @@ import (
     "github.com/codeworks-tw/cwsutil/cwsfsm"
 )
 
-// 定義步驟名稱
+// Define step names | 定義步驟名稱
 const (
     StartStep    cwsfsm.FSMStepName = "StartStep"
     ProcessStep  cwsfsm.FSMStepName = "ProcessStep"
     EndStep      cwsfsm.FSMStepName = "EndStep"
 )
 
-// 定義步驟實作
+// Define step implementations | 定義步驟實作
 var startStep cwsfsm.FSMStep[int] = func(ctx context.Context, transaction *cwsfsm.FSMStepTransaction[int]) (*cwsfsm.FSMStepTransaction[int], error) {
-    fmt.Println("開始處理，初始值:", transaction.Data)
+    fmt.Println("Starting processing, initial value:", transaction.Data)
     transaction.Data = 1
-    transaction.NextStep = ProcessStep // 設定下一個步驟
+    transaction.NextStep = ProcessStep // Set next step | 設定下一個步驟
     return transaction, nil
 }
 
 var processStep cwsfsm.FSMStep[int] = func(ctx context.Context, transaction *cwsfsm.FSMStepTransaction[int]) (*cwsfsm.FSMStepTransaction[int], error) {
-    // 遞增計數並決定下一步
+    // Increment counter and decide next step | 遞增計數並決定下一步
     if transaction.Data >= 10 {
-        transaction.NextStep = EndStep // 結束處理
+        transaction.NextStep = EndStep // End processing | 結束處理
         return transaction, nil
     }
-    fmt.Println("處理中，當前值:", transaction.Data)
+    fmt.Println("Processing, current value:", transaction.Data)
     transaction.Data++
-    transaction.NextStep = ProcessStep // 繼續循環
+    transaction.NextStep = ProcessStep // Continue loop | 繼續循環
     return transaction, nil
 }
 
 var endStep cwsfsm.FSMStep[int] = func(ctx context.Context, transaction *cwsfsm.FSMStepTransaction[int]) (*cwsfsm.FSMStepTransaction[int], error) {
-    fmt.Println("處理完成，最終值:", transaction.Data)
-    // 不設定 NextStep，表示工作流程結束
+    fmt.Println("Processing complete, final value:", transaction.Data)
+    // Don't set NextStep, indicating workflow end | 不設定 NextStep，表示工作流程結束
     return transaction, nil
 }
 
-// 建立步驟註冊表
+// Create step registry | 建立步驟註冊表
 stepRegistry := cwsfsm.FSMStepRegistry[int]{
     StartStep:   startStep,
     ProcessStep: processStep,
     EndStep:     endStep,
 }
 
-// 執行狀態機
+// Execute state machine | 執行狀態機
 transaction := &cwsfsm.FSMStepTransaction[int]{
     NextStep: StartStep,
     Data:     0,
 }
 
 if err := cwsfsm.RunFSMSteps(context.Background(), stepRegistry, transaction); err != nil {
-    fmt.Printf("執行錯誤: %v\n", err)
+    fmt.Printf("Execution error: %v\n", err)
 }
 ```
 
-### 5.3 動態步驟註冊
+### Dynamic Step Registration | 動態步驟註冊
 
 ```go
-// 建立空的註冊表
+// Create empty registry | 建立空的註冊表
 registry := make(cwsfsm.FSMStepRegistry[string])
 
-// 動態新增步驟
+// Dynamically add steps | 動態新增步驟
 registry.SetFSMStep("step1", func(ctx context.Context, transaction *cwsfsm.FSMStepTransaction[string]) (*cwsfsm.FSMStepTransaction[string], error) {
     transaction.Data += " -> step1"
     transaction.NextStep = "step2"
@@ -496,121 +597,176 @@ registry.SetFSMStep("step1", func(ctx context.Context, transaction *cwsfsm.FSMSt
 
 registry.SetFSMStep("step2", func(ctx context.Context, transaction *cwsfsm.FSMStepTransaction[string]) (*cwsfsm.FSMStepTransaction[string], error) {
     transaction.Data += " -> step2"
-    return transaction, nil // 結束工作流程
+    return transaction, nil // End workflow | 結束工作流程
 })
 
-// 執行動態建立的工作流程
+// Execute dynamically created workflow | 執行動態建立的工作流程
 transaction := &cwsfsm.FSMStepTransaction[string]{
     NextStep: "step1",
     Data:     "start",
 }
 
 if err := cwsfsm.RunFSMSteps(context.Background(), registry, transaction); err != nil {
-    fmt.Printf("執行錯誤: %v\n", err)
+    fmt.Printf("Execution error: %v\n", err)
 } else {
-    fmt.Printf("結果: %s\n", transaction.Data) // 輸出: "start -> step1 -> step2"
+    fmt.Printf("Result: %s\n", transaction.Data) // Output: "start -> step1 -> step2"
 }
 ```
 
-## 六、預定義錯誤回應
+---
 
-系統提供常用的 HTTP 錯誤回應：
+## Best Practices | 最佳實踐
 
-```go
-// 直接使用預定義錯誤
-return cwsutil.CWSBadRequestError.EmbedValues("invalid parameter")
-return cwsutil.CWSNotFoundError.EmbedValues(resourceId)
-return cwsutil.CWSUnauthorizedError
-return cwsutil.CWSForbiddenError
-return cwsutil.CWSInternalServerError.EmbedActualError(err)
+### Project Structure | 專案結構
 
-// 成功回應
-cwsutil.WriteResponse(ctx, cwsutil.CWSOKResponse.StatusCode, cwsutil.CWSOKResponse.LocalCode, data)
-```
-
-## 七、最佳實踐建議
-
-### 7.1 專案結構
 ```
 project/
 ├── main.go
 ├── config/
-│   └── config.go        // 環境變數配置
+│   └── config.go        // Environment variable configuration | 環境變數配置
 ├── models/
-│   ├── user.go          // 資料模型
-│   └── base.go          // 基礎模型
+│   ├── user.go          // Data models | 資料模型
+│   └── base.go          // Base models | 基礎模型
 ├── repositories/
-│   ├── user_repo.go     // Repository 實作
-│   └── interfaces.go    // Repository 介面
+│   ├── user_repo.go     // Repository implementation | Repository 實作
+│   └── interfaces.go    // Repository interfaces | Repository 介面
 ├── handlers/
-│   └── user_handler.go  // HTTP 處理器
+│   └── user_handler.go  // HTTP handlers | HTTP 處理器
 ├── services/
-│   └── user_service.go  // 業務邏輯
+│   └── user_service.go  // Business logic | 業務邏輯
 └── localization/
-    └── messages.json    // 多語系訊息
+    └── messages.json    // Localization messages | 多語系訊息
 ```
 
-### 7.2 錯誤處理策略
+### Error Handling Strategy | 錯誤處理策略
 
 ```go
-// 定義專案特定的錯誤碼
+// Define project-specific error codes | 定義專案特定的錯誤碼
 const (
-    LocalCode_UserNotFound     = "USER_001"
-    LocalCode_InvalidEmail     = "USER_002"
-    LocalCode_DuplicateUser    = "USER_003"
+    LocalCode_UserNotFound   cwsbase.LocalizationCode  = "10001"
+    LocalCode_InvalidEmail   cwsbase.LocalizationCode  = "10002"
+    LocalCode_DuplicateUser  cwsbase.LocalizationCode  = "10003"
 )
 
-// 在服務層統一處理錯誤
+// Custom localization data for project-specific errors | 專案特定錯誤的自定義多語系數據
+const CustomLocalizationData = `{
+    "en": {
+        "USER_001": "User not found - Id: %s",
+        "USER_002": "Invalid email format: %s",
+        "USER_003": "User with email already exists: %s"
+    },
+    "zh_tw": {
+        "USER_001": "用戶未找到 - Id: %s",
+        "USER_002": "無效的電子郵件格式: %s",
+        "USER_003": "電子郵件已存在的用戶: %s"
+    }
+}`
+
+// Initialize custom localization data | 初始化自定義多語系數據
+cwsutil.SetLocalizationData(CustomLocalizationData)
+
+// Define custom error responses | 定義自定義錯誤回應
+var DuplicateUserError = cwsutil.CWSLocalizedErrorResponse{
+    StatusCode: http.StatusConflict,
+    LocalCode:  LocalCode_DuplicateUser,
+}
+
+// Unified error handling in service layer | 在服務層統一處理錯誤
 func (s *UserService) CreateUser(user *User) error {
     if !isValidEmail(user.Email) {
-        return cwsutil.CWSBadRequestError.
-            EmbedValues(user.Email).
-            EmbedActualError(errors.New("invalid email format"))
+        return cwsutil.BadRequestErrorResponse.
+            MessageValues(user.Email).
+            EmbedError(errors.New("invalid email format"))
     }
     
     if exists, _ := s.repo.UserExists(user.Email); exists {
-        return customErrors.DuplicateUserError.EmbedValues(user.Email)
+        return DuplicateUserError.MessageValues(user.Email)
     }
     
     return s.repo.Create(user)
 }
 ```
 
+### Performance Optimization | 性能優化
+
+```go
+// Use streaming for large datasets | 對大數據集使用串流
+func (h *UserHandler) GetAllUsers(ctx *gin.Context) error {
+    cursor, err := h.service.GetUsersCursor()
+    if err != nil {
+        return err
+    }
+    defer cursor.Close(ctx)
+    
+    // Stream response to avoid memory issues | 串流回應以避免內存問題
+    return cwsutil.WriteResponseWithMongoCursor[User](ctx, 
+        http.StatusOK, cwsutil.LocalCode_OK, cursor)
+}
+
+// Use transactions for consistency | 使用事務保證一致性
+func (s *UserService) TransferCredits(fromUser, toUser *User, amount int) error {
+    repo := s.getRepository()
+    
+    if err := repo.Begin(); err != nil {
+        return err
+    }
+    
+    // Execute operations in transaction | 在事務中執行操作
+    if err := s.deductCredits(fromUser, amount); err != nil {
+        repo.Rollback()
+        return err
+    }
+    
+    if err := s.addCredits(toUser, amount); err != nil {
+        repo.Rollback() 
+        return err
+    }
+    
+    return repo.Commit()
+}
+```
+
 ---
 
-## 錯誤回應格式
+## API Response Format | API 回應格式
 
+All API responses follow a unified format:
 所有 API 回應都遵循統一格式：
 
-### 成功回應
+### Success Response | 成功回應
+
 ```json
 {
     "code": "200",
-    "message": "成功",
+    "message": "OK",
     "data": {
-        // 實際資料
+        // Actual data | 實際資料
     }
 }
 ```
 
-### 錯誤回應 (一般模式)
+### Error Response (Production) | 錯誤回應（生產環境）
+
 ```json
 {
     "code": "USER_001",
-    "message": "使用者不存在 - Id: 123",
-    "data": null
+    "message": "User not found - Id: 123",
+    "error": null
 }
 ```
 
-### 錯誤回應 (除錯模式)
+### Error Response (Debug Mode) | 錯誤回應（除錯模式）
+
 ```json
 {
-    "code": "USER_001",
-    "message": "使用者不存在 - Id: 123",
-    "data": "sql: no rows in result set"
+    "code": "USER_001", 
+    "message": "User not found - Id: 123",
+    "error": "sql: no rows in result set"
 }
 ```
 
 ---
+
+This utility library is designed to provide a clean, secure, and efficient API development experience while maintaining good testability and extensibility. Through unified error handling, localization support, and rich database operation tools, it can significantly improve development efficiency.
 
 這個工具庫的設計理念是提供簡潔、安全、高效的 API 開發體驗，同時保持良好的可測試性和可擴展性。通過統一的錯誤處理、多語系支援和豐富的資料庫操作工具，可以大幅提升開發效率。
