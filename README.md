@@ -651,14 +651,14 @@ const (
 // Custom localization data for project-specific errors | 專案特定錯誤的自定義多語系數據
 const CustomLocalizationData = `{
     "en": {
-        "USER_001": "User not found - Id: %s",
-        "USER_002": "Invalid email format: %s",
-        "USER_003": "User with email already exists: %s"
+        "10001": "User not found - Id: %s",
+        "10002": "Invalid email format: %s",
+        "10003": "User with email already exists: %s"
     },
     "zh_tw": {
-        "USER_001": "用戶未找到 - Id: %s",
-        "USER_002": "無效的電子郵件格式: %s",
-        "USER_003": "電子郵件已存在的用戶: %s"
+        "10001": "用戶未找到 - Id: %s",
+        "10002": "無效的電子郵件格式: %s",
+        "10003": "電子郵件已存在的用戶: %s"
     }
 }`
 
