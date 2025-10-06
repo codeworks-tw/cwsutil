@@ -749,7 +749,7 @@ All API responses follow a unified format:
 
 ```json
 {
-    "code": "USER_001",
+    "code": "10001",
     "message": "User not found - Id: 123",
     "error": null
 }
@@ -759,7 +759,7 @@ All API responses follow a unified format:
 
 ```json
 {
-    "code": "USER_001", 
+    "code": "10001", 
     "message": "User not found - Id: 123",
     "error": "sql: no rows in result set"
 }
