@@ -53,12 +53,14 @@ func ParseQuery(c *gin.Context, data any) error {
 func WrapHandler(fn func(ctx *gin.Context) error) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		err := fn(ctx)
-		if resp, ok := err.(CWSLocalizedErrorResponse); ok {
-			resp.WriteResponse(ctx)
-			return
+		if err != nil {
+			if resp, ok := err.(CWSLocalizedErrorResponse); ok {
+				resp.WriteResponse(ctx)
+				return
+			}
+			InternalServerErrorResponse.EmbedError(err).WriteResponse(ctx)
+			panic(err)
 		}
-		InternalServerErrorResponse.EmbedError(err).WriteResponse(ctx)
-		panic(err)
 	}
 }
 
