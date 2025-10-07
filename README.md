@@ -27,7 +27,7 @@ go get github.com/codeworks-tw/cwsutil
 
 ## Version History | 版本發佈記錄
 
-- **v0.3.16** - Oct 6, 2025 | 2025年10月6日
+- **v0.3.17** - Oct 7, 2025 | 2025年10月7日
 - **v0.3.14** - September 28, 2025 | 2025年9月28日
 - **v0.3.8** - September 21, 2025 | 2025年9月21日  
 - **v0.3.6** - June 15, 2024 | 2024年6月15日

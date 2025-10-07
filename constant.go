@@ -90,16 +90,16 @@ func (r CWSLocalizedResponse) WriteResponse(ctx *gin.Context) {
 
 // MessageValues sets the values to be embedded in the localized message using sprintf formatting
 // Returns the same CWSLocalizedResponse instance for method chaining
-func (r *CWSLocalizedResponse) MessageValues(values ...any) CWSLocalizedResponse {
+func (r CWSLocalizedResponse) MessageValues(values ...any) CWSLocalizedResponse {
 	r.embedValues = values
-	return *r
+	return r
 }
 
 // ResponseData sets the data to be included in the response
 // Returns the same CWSLocalizedResponse instance for method chaining
-func (r *CWSLocalizedResponse) ResponseData(data any) CWSLocalizedResponse {
+func (r CWSLocalizedResponse) ResponseData(data any) CWSLocalizedResponse {
 	r.data = data
-	return *r
+	return r
 }
 
 // CWSLocalizedErrorResponse represents a localized HTTP response structure that implements the error interface
