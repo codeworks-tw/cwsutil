@@ -32,7 +32,7 @@ type IRepository[T any] interface {
 // It provides GORM-based database operations for entities of type T
 type Repository[T any] struct {
 	IRepository[T]
-	session *DBSession     // Database session for connection management
+	session *DBSession      // Database session for connection management
 	context context.Context // Context for database operations
 }
 
@@ -102,15 +102,15 @@ func (r *Repository[T]) Upsert(entity *T, excludeColumns ...string) error {
 	if r.isGenericPointer() {
 		return errors.New("generic type T must be a struct")
 	}
-	assignments, err := GetNonPrimaryKeyAssignments(r.session.GetDb(), entity, excludeColumns...)
+	assignments, err := GetNonPrimaryKeyAssignments(r.GetGorm(), entity, excludeColumns...)
 	if err != nil {
 		return err
 	}
-	columns, err := GetPrimaryKeyColumns(r.session.GetDb(), entity)
+	columns, err := GetPrimaryKeyColumns(r.GetGorm(), entity)
 	if err != nil {
 		return err
 	}
-	return r.session.GetDb().Clauses(clause.Returning{}, clause.OnConflict{
+	return r.GetGorm().Clauses(clause.Returning{}, clause.OnConflict{
 		Columns:   columns, // The conflicting primary key column(s)
 		DoUpdates: assignments,
 	}).Create(&entity).Error
@@ -125,7 +125,7 @@ func (r *Repository[T]) Delete(entity *T) error {
 	if r.isGenericPointer() {
 		return errors.New("generic type T must be a struct")
 	}
-	result := r.session.GetDb().WithContext(r.context).Delete(entity)
+	result := r.GetGorm().Delete(entity)
 	return result.Error
 }
 
@@ -160,7 +160,7 @@ func (r *Repository[T]) Refresh(entity *T) error {
 	if r.isGenericPointer() {
 		return errors.New("generic type T must be a struct")
 	}
-	wc, err := GetPrimaryKeyValueMap(r.session.GetDb(), entity)
+	wc, err := GetPrimaryKeyValueMap(r.GetGorm(), entity)
 	if err != nil {
 		return err
 	}
