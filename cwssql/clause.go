@@ -35,12 +35,16 @@ func (w WhereCaluse) Lte(key string, value any) WhereCaluse {
 }
 
 func (w WhereCaluse) In(key string, values ...any) WhereCaluse {
-	w[cwsbase.ToSnakeCase(key)+" IN (?)"] = values
+	if len(values) > 0 {
+		w[cwsbase.ToSnakeCase(key)+" IN (?)"] = values
+	}
 	return w
 }
 
 func (w WhereCaluse) Nin(key string, values ...any) WhereCaluse {
-	w[cwsbase.ToSnakeCase(key)+" NOT IN (?)"] = values
+	if len(values) > 0 {
+		w[cwsbase.ToSnakeCase(key)+" NOT IN (?)"] = values
+	}
 	return w
 }
 

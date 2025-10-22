@@ -19,6 +19,7 @@ type IRepository[T any] interface {
 	GetAll(whereClause ...WhereCaluse) ([]*T, error)    // Get all entities matching the where clauses
 	Get(whereClause ...WhereCaluse) (*T, error)         // Get a single entity matching the where clauses
 	Upsert(entity *T, excludeColumns ...string) error   // Create or update entity (insert or update on conflict)
+	Update(entity *T, excludeColumns ...string) error   // Update entity in database
 	Delete(entity *T) error                             // Delete a specific entity
 	DeleteAll(whereClause ...WhereCaluse) ([]*T, error) // Delete all entities matching the where clauses
 	Refresh(entity *T) error                            // Refresh entity with latest data from database
@@ -114,6 +115,35 @@ func (r *Repository[T]) Upsert(entity *T, excludeColumns ...string) error {
 		Columns:   columns, // The conflicting primary key column(s)
 		DoUpdates: assignments,
 	}).Create(&entity).Error
+}
+
+func (r *Repository[T]) Update(entity *T, excludeColumns ...string) error {
+	if entity == nil {
+		return errors.New("entity must not be nil")
+	}
+	if r.isGenericPointer() {
+		return errors.New("generic type T must be a struct")
+	}
+	pAssignments, err := GetPrimaryKeyAssignments(r.GetGorm(), entity)
+	if err != nil {
+		return err
+	}
+	if len(pAssignments) == 0 {
+		return errors.New("no primary key values found")
+	}
+	statement := r.GetGorm().Clauses(clause.Returning{})
+	for _, assignment := range pAssignments {
+		statement.Where(assignment.Column.Name+" = ?", assignment.Value)
+	}
+	result := statement.Updates(entity)
+	if result.Error != nil {
+		return result.Error
+	}
+	// If no rows were updated, it means the entity was not found
+	if result.RowsAffected == 0 {
+		return gorm.ErrRecordNotFound
+	}
+	return nil
 }
 
 // Delete removes the specified entity from the database

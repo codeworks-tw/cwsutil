@@ -175,3 +175,31 @@ func GetNonPrimaryKeyAssignments(db *gorm.DB, model any, excludeColumns ...strin
 	}
 	return assignments, nil
 }
+
+func GetPrimaryKeyAssignments(db *gorm.DB, model any) (clause.Set, error) {
+	stmt := &gorm.Statement{DB: db}
+	if err := stmt.Parse(model); err != nil {
+		return nil, err
+	}
+
+	var inInterface map[string]any
+	inrec, _ := json.Marshal(model)
+	err := json.Unmarshal(inrec, &inInterface)
+	if err != nil {
+		return nil, err
+	}
+	var assignments []clause.Assignment
+	for _, field := range stmt.Schema.Fields {
+		if field.TagSettings["PRIMARYKEY"] == "PRIMARYKEY" {
+			value := inInterface[field.DBName]
+			if value == nil {
+				value = inInterface[field.Name] // field name might affect by json field tag
+			}
+			assignments = append(assignments, clause.Assignment{
+				Column: clause.Column{Name: field.DBName},
+				Value:  value,
+			})
+		}
+	}
+	return assignments, nil
+}
