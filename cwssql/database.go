@@ -58,6 +58,13 @@ type DBSession struct {
 	dbStack cwsbase.Stack[gorm.DB]
 }
 
+// popDbStack restores the previous DB reference after a transaction ends.
+func (s *DBSession) popDbStack() {
+	if db := s.dbStack.Pop(); db != nil {
+		s.db = db
+	}
+}
+
 func (s *DBSession) GetDb() *gorm.DB {
 	return s.db
 }
@@ -72,22 +79,18 @@ func (s *DBSession) Begin() error {
 }
 
 func (s *DBSession) Rollback() error {
-	return s.db.Rollback().Error
+	err := s.db.Rollback().Error
+	s.popDbStack()
+	return err
 }
 
 func (s *DBSession) Commit() error {
-	defer func() {
-		if s.dbStack.Len() > 0 {
-			s.db = s.dbStack.Pop()
-		}
-	}()
 	result := s.db.Commit()
 	if result.Error != nil {
-		err := s.Rollback()
-		if err != nil {
-			return err
-		}
+		// Ensure the transaction is properly rolled back and connection returned.
+		_ = s.db.Rollback()
 	}
+	s.popDbStack()
 	return result.Error
 }
 
