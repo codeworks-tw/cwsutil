@@ -28,8 +28,8 @@ func (r *AccountRepository) GetAccounts(account string) ([]*Account, error) {
 	return r.GetAll(Eq("Account", account))
 }
 
-func NewAccountRepository(context context.Context, session *gorm.DB) *AccountRepository {
-	return (*AccountRepository)(NewRepository[Account](context, session))
+func NewAccountRepository(context context.Context, session *gorm.DB) AccountRepository {
+	return AccountRepository(NewRepository[Account](context, session))
 }
 
 func TestSqlRepository(t *testing.T) {
