@@ -2,6 +2,7 @@ package cwssql
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
 	"errors"
 	"reflect"
@@ -23,6 +24,7 @@ type IRepository[T any] interface {
 	DeleteAll(whereClause ...WhereCaluse) ([]*T, error) // Delete all entities matching the where clauses
 	Refresh(entity *T) error                            // Refresh entity with latest data from database
 	Count(whereClause ...WhereCaluse) (int64, error)    // Count entities matching the where clauses
+	Transaction(fc func(repo *Repository[T]) error, opts ...*sql.TxOptions) error
 }
 
 // Repository is a concrete implementation of IRepository interface
@@ -51,6 +53,13 @@ func (r *Repository[T]) GetGorm(whereClauses ...WhereCaluse) *gorm.DB {
 		}
 	}
 	return query
+}
+
+func (r *Repository[T]) Transaction(fc func(repo *Repository[T]) error, opts ...*sql.TxOptions) error {
+	return r.db.Transaction(func(tx *gorm.DB) error {
+		innerRepo := NewRepository[T](r.GetContext(), tx)
+		return fc(innerRepo)
+	}, opts...)
 }
 
 // GetContext returns the context associated with this repository
@@ -213,13 +222,13 @@ func applyValue(from any, to any) error {
 // ctx: Context to be used for database operations
 // session: Database session for connection management
 // Returns a configured Repository instance ready for database operations
-func NewRepository[T any](ctx context.Context, session *gorm.DB) Repository[T] {
+func NewRepository[T any](ctx context.Context, session *gorm.DB) *Repository[T] {
 	// Create a new repository instance with provided session and context
-	repo := Repository[T]{
+	repo := &Repository[T]{
 		db:      session,
 		context: ctx,
 	}
 	// Set the interface reference to enable method calls
-	repo.IRepository = &repo
+	repo.IRepository = repo
 	return repo
 }

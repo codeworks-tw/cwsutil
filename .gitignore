@@ -54,3 +54,5 @@ Thumbs.db
 
 tmp/
 main
+.gocache
+.cache
