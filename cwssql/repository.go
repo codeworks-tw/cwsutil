@@ -14,7 +14,6 @@ import (
 // T represents the entity type that this repository manages
 type IRepository[T any] interface {
 	GetGorm(whereClauses ...WhereCaluse) *gorm.DB       // Get the GORM DB object with applied where clauses
-	GetSession() *DBSession                             // Get the CWS database session
 	GetContext() context.Context                        // Get the current context
 	GetAll(whereClause ...WhereCaluse) ([]*T, error)    // Get all entities matching the where clauses
 	Get(whereClause ...WhereCaluse) (*T, error)         // Get a single entity matching the where clauses
@@ -24,16 +23,13 @@ type IRepository[T any] interface {
 	DeleteAll(whereClause ...WhereCaluse) ([]*T, error) // Delete all entities matching the where clauses
 	Refresh(entity *T) error                            // Refresh entity with latest data from database
 	Count(whereClause ...WhereCaluse) (int64, error)    // Count entities matching the where clauses
-	Begin() error                                       // Start a database transaction
-	Rollback() error                                    // Rollback the current transaction
-	Commit() error                                      // Commit the current transaction
 }
 
 // Repository is a concrete implementation of IRepository interface
 // It provides GORM-based database operations for entities of type T
 type Repository[T any] struct {
 	IRepository[T]
-	session *DBSession      // Database session for connection management
+	db      *gorm.DB        // Database session for connection management
 	context context.Context // Context for database operations
 }
 
@@ -48,18 +44,13 @@ func (r *Repository[T]) isGenericPointer() bool {
 // GetGorm returns a GORM DB instance with applied where clauses and context
 // whereClauses: Optional where conditions to apply to the query
 func (r *Repository[T]) GetGorm(whereClauses ...WhereCaluse) *gorm.DB {
-	query := r.session.GetDb().WithContext(r.context)
+	query := r.db
 	for _, wc := range whereClauses {
 		for key, values := range wc {
 			query = query.Where(key, values...)
 		}
 	}
 	return query
-}
-
-// GetSession returns the database session associated with this repository
-func (r *Repository[T]) GetSession() *DBSession {
-	return r.session
 }
 
 // GetContext returns the context associated with this repository
@@ -204,21 +195,6 @@ func (r *Repository[T]) Refresh(entity *T) error {
 	return nil
 }
 
-// Begin starts a new database transaction
-func (r *Repository[T]) Begin() error {
-	return r.session.Begin()
-}
-
-// Rollback rolls back the current transaction, undoing all changes made within the transaction
-func (r *Repository[T]) Rollback() error {
-	return r.session.Rollback()
-}
-
-// Commit commits the current transaction, making all changes permanent
-func (r *Repository[T]) Commit() error {
-	return r.session.Commit()
-}
-
 // applyValue copies values from one struct to another using JSON marshaling/unmarshaling
 // This is used internally to update entity values after refresh operations
 func applyValue(from any, to any) error {
@@ -237,10 +213,10 @@ func applyValue(from any, to any) error {
 // ctx: Context to be used for database operations
 // session: Database session for connection management
 // Returns a configured Repository instance ready for database operations
-func NewRepository[T any](ctx context.Context, session *DBSession) Repository[T] {
+func NewRepository[T any](ctx context.Context, session *gorm.DB) Repository[T] {
 	// Create a new repository instance with provided session and context
 	repo := Repository[T]{
-		session: session,
+		db:      session,
 		context: ctx,
 	}
 	// Set the interface reference to enable method calls

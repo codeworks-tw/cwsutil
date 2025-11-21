@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"time"
 
-	"github.com/codeworks-tw/cwsutil/cwsbase"
 	"gorm.io/driver/postgres"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
@@ -51,51 +50,6 @@ func NewSQLiteDB(file_path string) (*gorm.DB, error) {
 		db.SetConnMaxLifetime(time.Hour)
 	}
 	return db_instance, err
-}
-
-type DBSession struct {
-	db      *gorm.DB
-	dbStack cwsbase.Stack[gorm.DB]
-}
-
-// popDbStack restores the previous DB reference after a transaction ends.
-func (s *DBSession) popDbStack() {
-	if db := s.dbStack.Pop(); db != nil {
-		s.db = db
-	}
-}
-
-func (s *DBSession) GetDb() *gorm.DB {
-	return s.db
-}
-
-func (s *DBSession) Begin() error {
-	tx := s.db.Begin()
-	if tx.Error == nil {
-		s.dbStack.Push(s.db)
-		s.db = tx
-	}
-	return tx.Error
-}
-
-func (s *DBSession) Rollback() error {
-	err := s.db.Rollback().Error
-	s.popDbStack()
-	return err
-}
-
-func (s *DBSession) Commit() error {
-	result := s.db.Commit()
-	if result.Error != nil {
-		// Ensure the transaction is properly rolled back and connection returned.
-		_ = s.db.Rollback()
-	}
-	s.popDbStack()
-	return result.Error
-}
-
-func NewSession(db *gorm.DB) *DBSession {
-	return &DBSession{db: db}
 }
 
 func GetPrimaryKeyValueMap(db *gorm.DB, model any) (WhereCaluse, error) {
