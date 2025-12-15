@@ -177,7 +177,8 @@ func (r *Repository[T]) Count(whereClauses ...WhereCaluse) (int64, error) {
 		return 0, errors.New("generic type T must be a struct")
 	}
 	var count int64
-	result := r.GetGorm(whereClauses...).Count(&count)
+	var v T
+	result := r.GetGorm(whereClauses...).Model(&v).Count(&count)
 	return count, result.Error
 }
 
