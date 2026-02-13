@@ -124,6 +124,16 @@ func GetNonPrimaryKeyAssignments(db *gorm.DB, model any, excludeColumns ...strin
 			if value == nil {
 				value = inInterface[field.Name] // field name might affect by json field tag
 			}
+			// When field type is json/jsonb, the value deserialized from JSON
+			// becomes []any or map[string]any. GORM will expand these as SQL
+			// records/tuples instead of a JSON string. Re-marshal back to a
+			// JSON string so GORM treats it as a scalar value.
+			switch value.(type) {
+			case []any, map[string]any:
+				if jsonBytes, err := json.Marshal(value); err == nil {
+					value = string(jsonBytes)
+				}
+			}
 			assignments = append(assignments, clause.Assignment{
 				Column: clause.Column{Name: field.DBName},
 				Value:  value,
