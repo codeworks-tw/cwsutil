@@ -133,13 +133,18 @@ func (r *Repository[T]) Update(entity *T, excludeColumns ...string) error {
 	}
 	statement := r.GetGorm().Clauses(clause.Returning{})
 	for _, assignment := range pAssignments {
-		statement.Where(assignment.Column.Name+" = ?", assignment.Value)
+		statement = statement.Where(assignment.Column.Name+" = ?", assignment.Value)
 	}
-	result := statement.Updates(entity)
+	omitCols := make([]string, 0, len(pAssignments)+len(excludeColumns)+1)
+	for _, assignment := range pAssignments {
+		omitCols = append(omitCols, assignment.Column.Name)
+	}
+	omitCols = append(omitCols, "created_at")
+	omitCols = append(omitCols, excludeColumns...)
+	result := statement.Select("*").Omit(omitCols...).Updates(entity)
 	if result.Error != nil {
 		return result.Error
 	}
-	// If no rows were updated, it means the entity was not found
 	if result.RowsAffected == 0 {
 		return gorm.ErrRecordNotFound
 	}
